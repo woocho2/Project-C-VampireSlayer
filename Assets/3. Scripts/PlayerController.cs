@@ -5,23 +5,33 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("이동 및 회전 수치 설정")]
-    public float moveSpeed = 5f;
+    public float walkSpeed = 2f;
+    public float runSpeed = 5f;
     public float jumpHeight = 2f;
     public float gravity = -9.81f;
-    public float rotationSpeed = 10f;
+    public float rotationSpeed = 5f;
 
-    private CharacterController controller;
-    private Animator animator;
+    [Header("전투 설정")]
+    public float autoPutTime = 10f;
+
+    private CharacterController m_cc;
+    private Animator m_ani;
 
     private Vector2 moveInput;
-    private Vector3 verticalVelocity; // Y축(중력 및 점프) 전용 속도 변수
+    private Vector3 verticalVelocity;
+
     private bool isGrounded;
+    private bool isRunning;
+
+    private bool isArmed = false;
+    private float combatTimer = 0f;
+
     private Transform mainCameraTransform;
 
     private void Awake()
     {
-        controller = GetComponent<CharacterController>();
-        animator = GetComponentInChildren<Animator>();
+        m_cc = GetComponent<CharacterController>();
+        m_ani = GetComponentInChildren<Animator>();
 
         if (Camera.main != null)
         {
@@ -35,25 +45,39 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // 1. 수평 이동 벡터(X, Z) 연산
-        Vector3 horizontalMove = CalculateMovement();
+        bool isAction = IsPlayingAction();
+        Vector3 horizontalMove = Vector3.zero;
 
-        // 2. 수직 이동 벡터(Y) 연산
+        if (!isAction)
+        {
+            horizontalMove = CalculateMovement();
+            RotateCharacter(horizontalMove);
+        }
+
         CalculateGravity();
 
-        // 3. 수평과 수직 벡터를 하나로 합성하여 단일 Move() 호출 수행
-        // 이렇게 해야 controller.velocity에 수평과 수직 이동 결과가 모두 온전히 저장됩니다.
         Vector3 finalMovement = horizontalMove + verticalVelocity;
-        controller.Move(finalMovement * Time.deltaTime);
+        m_cc.Move(finalMovement * Time.deltaTime);
 
-        // 4. 캐릭터 회전 및 애니메이션 갱신
-        RotateCharacter(horizontalMove);
+        ManageCombatState();
         UpdateAnimation();
+    }
+
+    private bool IsPlayingAction()
+    {
+        if (m_ani != null)
+        {
+            AnimatorStateInfo stateInfo = m_ani.GetCurrentAnimatorStateInfo(0);
+
+            return stateInfo.IsName("Drawing Sword") ||
+                   stateInfo.IsName("Sword Slash") ||
+                   stateInfo.IsName("Putting Sword");
+        }
+        return false;
     }
 
     private Vector3 CalculateMovement()
     {
-        // 입력값이 없으면 이동 벡터 0 반환
         if (moveInput.sqrMagnitude <= 0.01f) return Vector3.zero;
 
         Vector3 cameraForward = mainCameraTransform.forward;
@@ -65,48 +89,66 @@ public class PlayerController : MonoBehaviour
         cameraForward.Normalize();
         cameraRight.Normalize();
 
-        // 카메라가 바라보는 방향을 기준으로 최종 수평 방향 벡터 반환
         Vector3 moveDirection = cameraRight * moveInput.x + cameraForward * moveInput.y;
-        return moveDirection * moveSpeed;
+        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+
+        return moveDirection * currentSpeed;
     }
 
     private void CalculateGravity()
     {
-        isGrounded = controller.isGrounded;
+        isGrounded = m_cc.isGrounded;
 
-        // 바닥에 닿아있고 아래로 떨어지는 중이라면 Y축 속도를 일정하게 초기화
         if (isGrounded && verticalVelocity.y < 0)
         {
             verticalVelocity.y = -2f;
         }
 
-        // 중력 가속도 누적
         verticalVelocity.y += gravity * Time.deltaTime;
     }
 
     private void RotateCharacter(Vector3 moveDirection)
     {
-        // 수평 이동 입력이 존재할 때만 회전 수행
         if (moveDirection.sqrMagnitude > 0.01f)
         {
-            // 수직(Y축) 기울어짐을 방지하기 위해 강제로 0으로 고정
             moveDirection.y = 0f;
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
     }
 
-    private void UpdateAnimation()
+    private void ManageCombatState()
     {
-        // 통합된 단일 Move 호출 덕분에 이제 velocity.x와 velocity.z 값을 제대로 가져옵니다.
-        Vector3 horizontalVelocity = new Vector3(controller.velocity.x, 0f, controller.velocity.z);
-        float currentSpeed = horizontalVelocity.magnitude;
-
-        if (animator != null)
+        if (isArmed)
         {
-            animator.SetFloat("MoveSpeed", currentSpeed);
+            combatTimer += Time.deltaTime;
+
+            if (combatTimer >= autoPutTime)
+            {
+                isArmed = false;
+                combatTimer = 0f;
+
+                if (m_ani != null)
+                {
+                    m_ani.SetTrigger("PutSword");
+                }
+            }
         }
     }
+
+    private void UpdateAnimation()
+    {
+        Vector3 horizontalVelocity = new Vector3(m_cc.velocity.x, 0f, m_cc.velocity.z);
+        float currentSpeed = horizontalVelocity.magnitude;
+
+        if (m_ani != null)
+        {
+            m_ani.SetFloat("MoveSpeed", currentSpeed);
+            m_ani.SetBool("IsGrounded", isGrounded);
+        }
+    }
+
+    // --- Input System 이벤트 함수 ---
 
     public void OnMove(InputValue value)
     {
@@ -115,9 +157,40 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputValue value)
     {
-        if (value.isPressed && isGrounded)
+        // 개선 1: !IsPlayingAction() 조건을 추가하여 공격/발도/납도 중에는 점프 로직이 무시되도록 설정합니다.
+        if (value.isPressed && isGrounded && !IsPlayingAction())
         {
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+    }
+
+    public void OnRun(InputValue value)
+    {
+        isRunning = value.isPressed;
+    }
+
+    public void OnAttack(InputValue value)
+    {
+        // 개선 2: isGrounded 조건을 추가하여 바닥에 닿아있을 때만 공격 로직이 실행되도록 설정합니다.
+        if (value.isPressed && isGrounded)
+        {
+            combatTimer = 0f;
+
+            if (!isArmed)
+            {
+                isArmed = true;
+                if (m_ani != null)
+                {
+                    m_ani.SetTrigger("DrawSword");
+                }
+            }
+            else
+            {
+                if (m_ani != null)
+                {
+                    m_ani.SetTrigger("DoAttack");
+                }
+            }
         }
     }
 }
