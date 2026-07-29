@@ -5,14 +5,20 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("이동 및 회전 수치 설정")]
-    public float walkSpeed = 2f;
-    public float runSpeed = 5f;
+    public float walkSpeed = 4f;
+    public float runSpeed = 10f;
     public float jumpHeight = 2f;
     public float gravity = -9.81f;
     public float rotationSpeed = 5f;
 
+    [Header("가감속 설정")]
+    // 출발 및 가속 속도 (수치가 높을수록 키 입력 시 즉시 출발합니다)
+    public float acceleration = 15f;
+    // 정지 및 감속 속도 (수치가 낮을수록 얼음판처럼 더 많이 미끄러집니다)
+    public float deceleration = 2f;
+
     [Header("전투 설정")]
-    public float autoPutTime = 10f;
+    public float startBattleTime = 10f;
 
     private CharacterController m_cc;
     private Animator m_ani;
@@ -27,6 +33,9 @@ public class PlayerController : MonoBehaviour
     private float combatTimer = 0f;
 
     private Transform mainCameraTransform;
+
+    private float currentSpeed = 0f;
+    private Vector3 lastMoveDirection = Vector3.zero;
 
     private void Awake()
     {
@@ -53,6 +62,12 @@ public class PlayerController : MonoBehaviour
             horizontalMove = CalculateMovement();
             RotateCharacter(horizontalMove);
         }
+        else
+        {
+            // 액션 중일 때는 목표 속도가 0이므로 deceleration(감속도)를 적용하여 미끄러지듯 멈춤
+            currentSpeed = Mathf.Lerp(currentSpeed, 0f, Time.deltaTime * acceleration);
+            horizontalMove = lastMoveDirection * currentSpeed;
+        }
 
         CalculateGravity();
 
@@ -78,21 +93,33 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 CalculateMovement()
     {
-        if (moveInput.sqrMagnitude <= 0.01f) return Vector3.zero;
+        float targetSpeed = 0f;
 
-        Vector3 cameraForward = mainCameraTransform.forward;
-        Vector3 cameraRight = mainCameraTransform.right;
+        if (moveInput.sqrMagnitude > 0.01f)
+        {
+            targetSpeed = isRunning ? runSpeed : walkSpeed;
 
-        cameraForward.y = 0f;
-        cameraRight.y = 0f;
+            Vector3 cameraForward = mainCameraTransform.forward;
+            Vector3 cameraRight = mainCameraTransform.right;
 
-        cameraForward.Normalize();
-        cameraRight.Normalize();
+            cameraForward.y = 0f;
+            cameraRight.y = 0f;
 
-        Vector3 moveDirection = cameraRight * moveInput.x + cameraForward * moveInput.y;
-        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+            cameraForward.Normalize();
+            cameraRight.Normalize();
 
-        return moveDirection * currentSpeed;
+            lastMoveDirection = cameraRight * moveInput.x + cameraForward * moveInput.y;
+            lastMoveDirection.Normalize();
+        }
+
+        // 1. 목표 속도가 현재 속도보다 높은지(가속 중인지) 낮은지(감속 중인지) 판별
+        // 삼항 연산자를 통해 적용할 변화율(Rate)을 결정합니다.
+        float currentRate = (targetSpeed > currentSpeed) ? acceleration : deceleration;
+
+        // 2. 결정된 Rate(가속도 또는 감속도)를 Lerp에 적용하여 현재 속도를 갱신
+        currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * currentRate);
+
+        return lastMoveDirection * currentSpeed;
     }
 
     private void CalculateGravity()
@@ -123,7 +150,7 @@ public class PlayerController : MonoBehaviour
         {
             combatTimer += Time.deltaTime;
 
-            if (combatTimer >= autoPutTime)
+            if (combatTimer >= startBattleTime)
             {
                 isArmed = false;
                 combatTimer = 0f;
@@ -139,11 +166,11 @@ public class PlayerController : MonoBehaviour
     private void UpdateAnimation()
     {
         Vector3 horizontalVelocity = new Vector3(m_cc.velocity.x, 0f, m_cc.velocity.z);
-        float currentSpeed = horizontalVelocity.magnitude;
+        float speedMagnitude = horizontalVelocity.magnitude;
 
         if (m_ani != null)
         {
-            m_ani.SetFloat("MoveSpeed", currentSpeed);
+            m_ani.SetFloat("MoveSpeed", speedMagnitude);
             m_ani.SetBool("IsGrounded", isGrounded);
         }
     }
@@ -157,7 +184,6 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputValue value)
     {
-        // 개선 1: !IsPlayingAction() 조건을 추가하여 공격/발도/납도 중에는 점프 로직이 무시되도록 설정합니다.
         if (value.isPressed && isGrounded && !IsPlayingAction())
         {
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
@@ -171,7 +197,6 @@ public class PlayerController : MonoBehaviour
 
     public void OnAttack(InputValue value)
     {
-        // 개선 2: isGrounded 조건을 추가하여 바닥에 닿아있을 때만 공격 로직이 실행되도록 설정합니다.
         if (value.isPressed && isGrounded)
         {
             combatTimer = 0f;

@@ -4,19 +4,27 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    // 전역 접근을 위한 싱글톤 인스턴스
+    // 싱글톤 인스턴스 (어디서든 접근 가능하도록 설정)
     public static GameManager Instance { get; private set; }
 
-    private bool isTransitioning = false; // 중복 전환 방지 플래그
+    [Header("플레이어 데이터")]
+    // 게임 전체에서 하나로 유지되어야 할 플레이어 데이터를 보관합니다.
+    // 에디터에서 생성한 PlayerDataSO 에셋을 여기에 할당합니다.
+    public CharacterDataSO playerData;
+
+    [Header("전투 진입 데이터")]
+    // 필드에서 부딪힌 몬스터의 데이터를 배틀 씬으로 넘겨주기 위해 임시 보관합니다.
+    public MonsterDataSO encounteredMonster;
+
+    private bool isTransitioning = false;
 
     private void Awake()
     {
-        // 싱글톤 패턴 초기화
+        // 씬이 넘어가도 파괴되지 않도록 싱글톤을 셋업합니다.
         if (Instance == null)
         {
             Instance = this;
-            // 씬이 전환되어도 GameManager 객체가 파괴되지 않도록 설정 (선택 사항)
-            // DontDestroyOnLoad(gameObject); 
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -24,12 +32,13 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 뱀파이어가 플레이어와 충돌했을 때 호출할 함수
-    public void StartBattleTransition()
+    // 필드 몬스터와 충돌 시 호출되는 씬 전환 로직
+    public void StartBattleTransition(MonsterDataSO targetMonsterData)
     {
-        // 이미 씬 전환이 진행 중이라면 중복 실행 방지
         if (isTransitioning) return;
 
+        // 조우한 몬스터 데이터를 저장하고 코루틴을 실행합니다.
+        encounteredMonster = targetMonsterData;
         StartCoroutine(BattleTransitionRoutine());
     }
 
@@ -37,17 +46,14 @@ public class GameManager : MonoBehaviour
     {
         isTransitioning = true;
 
-        // 1. 게임 속도를 0.5배속으로 변경
-        Time.timeScale = 0.05f;
-
-        // 2. 현실 시간 기준으로 정확히 2초 대기
+        // 전투 돌입 시 멈추는 연출을 위해 시간을 느리게 합니다.
+        Time.timeScale = 0.01f;
         yield return new WaitForSecondsRealtime(2f);
-
-        // 3. 다음 씬으로 넘어가기 전, 게임 속도를 다시 정상(1.0)으로 복구
-        // 복구하지 않으면 다음 씬에서도 0.5배속이 유지됩니다.
         Time.timeScale = 1f;
 
-        // 4. 배틀 씬 로드
+        // 배틀 씬을 로드합니다.
         SceneManager.LoadScene("BattleScene");
+
+        isTransitioning = false;
     }
 }

@@ -4,10 +4,14 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class VampireController : MonoBehaviour
 {
+    [Header("몬스터 데이터")]
+    // 이 뱀파이어의 고유 정보(SO)를 인스펙터에서 할당받기 위한 변수입니다.
+    public MonsterDataSO MonsterData;
+
     [Header("이동 및 탐지 설정")]
-    public float wanderRadius = 10f;
-    public float wanderSpeed = 2f;
-    public float chaseSpeed = 4f;
+    public float patrolRadius = 10f;
+    public float patrolSpeed = 3f;
+    public float chaseSpeed = 8f;
     public float detectionRadius = 10f;
 
     [Header("대상 설정")]
@@ -69,15 +73,15 @@ public class VampireController : MonoBehaviour
 
     private void Wander()
     {
-        agent.speed = wanderSpeed;
+        agent.speed = patrolSpeed;
 
         if (!agent.hasPath || agent.remainingDistance <= agent.stoppingDistance)
         {
-            Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
+            Vector3 randomDirection = Random.insideUnitSphere * patrolRadius;
             randomDirection += startPosition;
 
             NavMeshHit hit;
-            if (NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, 1))
+            if (NavMesh.SamplePosition(randomDirection, out hit, patrolRadius, 1))
             {
                 agent.SetDestination(hit.position);
             }
@@ -100,10 +104,19 @@ public class VampireController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            // 수정된 부분: 직접 SceneManager를 호출하지 않고 GameManager에 처리를 위임합니다.
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.StartBattleTransition();
+                // 인스펙터에 SO 데이터가 정상적으로 연결되어 있는지 검사합니다.
+                if (MonsterData != null)
+                {
+                    // 괄호 안에 myMonsterData를 인자로 넣어 GameManager로 전달합니다.
+                    GameManager.Instance.StartBattleTransition(MonsterData);
+                }
+                else
+                {
+                    // 데이터 할당을 잊었을 경우를 대비하여 콘솔에 에러를 띄웁니다.
+                    Debug.LogError("VampireController에 MonsterDataSO가 할당되지 않았습니다.");
+                }
             }
             else
             {
