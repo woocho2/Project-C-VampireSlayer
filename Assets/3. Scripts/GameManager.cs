@@ -12,6 +12,11 @@ public class GameManager : MonoBehaviour
     // 에디터에서 생성한 PlayerDataSO 에셋을 여기에 할당합니다.
     public CharacterDataSO playerData;
 
+    [Header("파티 시스템 (신규")]
+    public CharacterDataSO[] partyMembers;
+
+    public int currentPartyIndex = 0;
+
     [Header("전투 진입 데이터")]
     // 필드에서 부딪힌 몬스터의 데이터를 배틀 씬으로 넘겨주기 위해 임시 보관합니다.
     public MonsterDataSO encounteredMonster;

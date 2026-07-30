@@ -12,7 +12,6 @@ public class SwordController : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        PutSword();
     }
 
     public void DrawSword()

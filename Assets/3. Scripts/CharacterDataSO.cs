@@ -11,6 +11,9 @@ public class CharacterDataSO : ScriptableObject
     // 배틀 씬에서 소환할 플레이어의 외형 프리팹(CharacterController가 없는 배틀 전용 배리언트)입니다.
     public GameObject playerPrefab;
 
+    // 메인 씬(필드)에서 소환할 플레이어의 외형 프리팹입니다.
+    public GameObject fieldPlayerPrefab;
+
     [Header("전투 스탯")]
     // 최대 체력 수치입니다.
     public int maxHealth = 100;

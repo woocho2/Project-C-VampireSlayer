@@ -27,24 +27,22 @@ public class BattleManager : MonoBehaviour
 
     private IEnumerator SetupBattle()
     {
-        // 싱글톤 GameManager가 존재하는지 먼저 확인합니다.
         if (GameManager.Instance == null)
         {
             Debug.LogError("GameManager 인스턴스를 찾을 수 없습니다.");
             yield break;
         }
 
-        // 1. 플레이어 생성 및 셋업 (GameManager에서 데이터를 가져옵니다)
+        // 1. 플레이어 생성 및 셋업
         CharacterDataSO pData = GameManager.Instance.playerData;
+        GameObject playerGO = null;
         if (pData != null && pData.playerPrefab != null)
         {
-            // PlayerDataSO 안에 등록된 배틀용 프리팹을 지정된 위치에 생성합니다.
-            GameObject playerGO = Instantiate(pData.playerPrefab, playerStation.position, playerStation.rotation);
+            playerGO = Instantiate(pData.playerPrefab, playerStation.position, playerStation.rotation);
             playerUnitScript = playerGO.GetComponent<UnitController>();
 
             if (playerUnitScript != null)
             {
-                // 플레이어 셋업 오버로딩 함수 호출
                 playerUnitScript.Setup(pData);
                 Debug.Log(playerUnitScript.unitName + " 준비 완료!");
             }
@@ -54,16 +52,17 @@ public class BattleManager : MonoBehaviour
             Debug.LogError("GameManager에 PlayerData가 연결되지 않았거나 프리팹이 누락되었습니다.");
         }
 
-        // 2. 몬스터 생성 및 셋업 (기존 로직과 동일하게 GameManager에서 가져옵니다)
+        // 2. 몬스터 생성 및 셋업
         MonsterDataSO mData = GameManager.Instance.encounteredMonster;
+        GameObject enemyGO = null;
         if (mData != null && mData.monsterPrefab != null)
         {
-            GameObject enemyGO = Instantiate(mData.monsterPrefab, enemyStation.position, enemyStation.rotation);
+            // 몬스터는 enemyStation의 회전값을 그대로 가지고 태어납니다. (에디터에서 뒤를 보게 셋팅 필요)
+            enemyGO = Instantiate(mData.monsterPrefab, enemyStation.position, enemyStation.rotation);
             enemyUnitScript = enemyGO.GetComponent<UnitController>();
 
             if (enemyUnitScript != null)
             {
-                // 몬스터 셋업 오버로딩 함수 호출
                 enemyUnitScript.Setup(mData);
                 Debug.Log(enemyUnitScript.unitName + "이(가) 나타났다!");
             }
@@ -73,6 +72,7 @@ public class BattleManager : MonoBehaviour
             Debug.LogError("GameManager에서 몬스터 데이터를 불러오지 못했습니다.");
         }
 
+        // --- 연출 시작 ---
         if (monsterCloseUpCamera != null) monsterCloseUpCamera.SetActive(true);
 
         if (UIManager_Battle.Instance != null && mData != null)
@@ -80,8 +80,61 @@ public class BattleManager : MonoBehaviour
             UIManager_Battle.Instance.PlayBattleStartUI(mData.monsterName);
         }
 
-        // 3. 등장 애니메이션을 위해 2초 대기 후 플레이어 턴 시작
-        yield return new WaitForSeconds(3f);
+        // 3-1. 몬스터가 뒤를 돌고 있는 상태로 1초 대기합니다.
+        yield return new WaitForSeconds(1f);
+
+        // 3-2. 몬스터가 플레이어를 향해 부드럽게 회전하는 로직
+        if (enemyGO != null && playerGO != null)
+        {
+            float turnDuration = 1.0f; // 회전하는 데 걸릴 총 시간 (1초)
+            float elapsed = 0f;        // 경과 시간 측정용 변수
+
+            Quaternion startRotation = enemyGO.transform.rotation; // 현재 몬스터의 회전값
+
+            // 몬스터 위치에서 플레이어 위치로 향하는 방향 벡터를 구합니다.
+            Vector3 directionToPlayer = (playerGO.transform.position - enemyGO.transform.position).normalized;
+            // 몬스터가 위아래로 기울어지는(인사하는) 현상을 막기 위해 Y축 높이 차이를 무시합니다.
+            directionToPlayer.y = 0;
+
+            // 방향 벡터를 Quaternion 회전 데이터로 변환하여 최종 목표 각도를 설정합니다.
+            Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
+
+            // 경과 시간이 1초(turnDuration)에 도달할 때까지 매 프레임 반복합니다.
+            while (elapsed < turnDuration)
+            {
+                elapsed += Time.deltaTime;
+
+                // Quaternion.Slerp를 사용하여 시작 각도에서 목표 각도까지 부드럽게 보간(보정)합니다.
+                enemyGO.transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed / turnDuration);
+
+                yield return null; // 다음 프레임이 렌더링될 때까지 루프를 일시 정지합니다.
+            }
+
+            // while문이 끝난 후 미세한 오차가 남을 수 있으므로 강제로 목표 각도를 완벽히 맞춥니다.
+            enemyGO.transform.rotation = targetRotation;
+        }
+
+        // 3-3. 회전 완료 후 남은 1초를 대기하여 총 3초의 연출 시간을 맞춥니다.
+        yield return new WaitForSeconds(1f);
+
+        if (monsterCloseUpCamera != null) monsterCloseUpCamera.SetActive(false);
+
+        yield return new WaitForSeconds(2f);
+
+        if (playerGO != null)
+        {
+            Animator playerAnim = playerGO.GetComponentInChildren<Animator>();
+            if (playerAnim != null)
+            {
+                // 1단계에서 생성한 트리거를 작동시켜 발도 애니메이션을 시작합니다.
+                playerAnim.SetTrigger("DrawSword");
+
+                // 발도 애니메이션이 재생되는 실제 시간(예: 1.5초)만큼 턴 시작을 추가로 대기시킵니다.
+                // 이 대기 시간이 없으면 검을 뽑는 도중에 플레이어 턴이 시작되어버립니다.
+                yield return new WaitForSeconds(1.5f);
+            }
+        }
+
         state = BattleState.PlayerTurn;
         PlayerTurn();
     }

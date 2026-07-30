@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent (typeof(Rigidbody))]
+[RequireComponent(typeof(CapsuleCollider))]
+[RequireComponent(typeof(PlayerInput))]
 public class PlayerController : MonoBehaviour
 {
     [Header("이동 및 회전 수치 설정")]
@@ -22,6 +25,7 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController m_cc;
     private Animator m_ani;
+    [SerializeField] SwordController m_swordController;
 
     private Vector2 moveInput;
     private Vector3 verticalVelocity;
@@ -49,6 +53,11 @@ public class PlayerController : MonoBehaviour
         else
         {
             Debug.LogError("MainCamera 태그가 설정된 카메라를 찾을 수 없습니다.");
+        }
+
+        if (m_swordController != null)
+        {
+            m_swordController.PutSword();
         }
     }
 

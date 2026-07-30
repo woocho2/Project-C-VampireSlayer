@@ -11,7 +11,6 @@ public class UnitController : MonoBehaviour
     [Header("UI 연결 및 설정")]
     // Screen Space - Overlay 캔버스에 있는 HP Bar 슬라이더를 연결합니다.
     public Slider hpSlider;
-    public Vector3 uiOffset = new Vector3(0f, 2f, 0f);
 
     private Camera mainCamera;
 
@@ -22,25 +21,10 @@ public class UnitController : MonoBehaviour
         {
             mainCamera = Camera.main;
         }
+
+        hpSlider.gameObject.SetActive(false);
     }
 
-    private void LateUpdate()
-    {
-        // UI가 캐릭터를 뚫는 현상을 방지하기 위해 3D 좌표를 2D 화면 좌표로 변환합니다.
-        if (hpSlider != null && mainCamera != null)
-        {
-            Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position + uiOffset);
-
-            if (screenPos.z < 0)
-            {
-                hpSlider.transform.position = new Vector3(-1000f, -1000f, 0f);
-            }
-            else
-            {
-                hpSlider.transform.position = new Vector3(screenPos.x, screenPos.y, 0f);
-            }
-        }
-    }
 
     /// <summary>
     /// [몬스터용] 데이터 셋업 함수
@@ -81,6 +65,8 @@ public class UnitController : MonoBehaviour
     /// </summary>
     public bool TakeDamage(int damage)
     {
+        hpSlider.gameObject.SetActive(true);
+
         currentHP -= damage;
 
         if (hpSlider != null)

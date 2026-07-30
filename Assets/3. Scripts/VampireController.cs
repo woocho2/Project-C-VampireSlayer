@@ -40,28 +40,41 @@ public class VampireController : MonoBehaviour
 
     private void Update()
     {
-        if (playerTarget == null) return;
-
-        float distanceToPlayer = Vector3.Distance(transform.position, playerTarget.position);
-
-        if (distanceToPlayer <= detectionRadius)
+        if (playerTarget == null)
         {
-            isChasing = true;
+            // 씬에서 "Player" 태그를 가진 오브젝트를 찾습니다.
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                playerTarget = playerObj.transform;
+            }
+        }
+
+        // 2. 타겟 존재 여부에 따른 상태 결정
+        if (playerTarget != null)
+        {
+            // 타겟이 존재하면 거리를 계산하여 추적 여부를 결정합니다.
+            float distanceToPlayer = Vector3.Distance(transform.position, playerTarget.position);
+            isChasing = (distanceToPlayer <= detectionRadius);
         }
         else
         {
+            // 맵에 플레이어가 아예 없다면 추적을 포기합니다.
             isChasing = false;
         }
 
+        // 3. 상태에 따른 행동 실행 (return으로 강제 종료되지 않으므로 무조건 실행됨)
         if (isChasing)
         {
             ChasePlayer();
         }
         else
         {
+            // 타겟이 없어도 isChasing은 false이므로 배회(Wander) 상태로 정상 진입합니다.
             Wander();
         }
 
+        // 4. 애니메이션 갱신
         UpdateAnimation();
     }
 
