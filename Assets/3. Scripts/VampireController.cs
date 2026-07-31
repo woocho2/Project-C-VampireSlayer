@@ -109,7 +109,6 @@ public class VampireController : MonoBehaviour
         if (m_ani != null)
         {
             m_ani.SetFloat("MoveSpeed", currentSpeed);
-            m_ani.SetBool("IsGrounded", true);
         }
     }
 
