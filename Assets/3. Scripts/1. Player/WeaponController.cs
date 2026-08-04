@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class SwordController : MonoBehaviour
+public class WeaponController : MonoBehaviour
 {
     [Header("가짜 무기(Prop) 할당")]
     // 주의: Skinned Mesh 원본이 아닌, 새롭게 배치한 정적 메쉬 오브젝트를 할당해야 합니다.

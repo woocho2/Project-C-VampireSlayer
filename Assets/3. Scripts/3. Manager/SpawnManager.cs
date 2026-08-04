@@ -1,6 +1,5 @@
 using UnityEngine;
 using Unity.Cinemachine;
-// 최신 유니티 입력 시스템을 사용하기 위해 네임스페이스를 반드시 추가해야 합니다.
 using UnityEngine.InputSystem;
 
 public class SpawnManager : MonoBehaviour
@@ -36,7 +35,7 @@ public class SpawnManager : MonoBehaviour
     {
         if (GameManager.Instance == null || GameManager.Instance.playerData == null) return;
 
-        CharacterDataSO cData = GameManager.Instance.playerData;
+        PlayerDataSO cData = GameManager.Instance.playerData;
         Transform targetSpawn = (spawnPoint != null) ? spawnPoint : transform;
 
         currentPlayerGO = Instantiate(cData.fieldPlayerPrefab, targetSpawn.position, targetSpawn.rotation);

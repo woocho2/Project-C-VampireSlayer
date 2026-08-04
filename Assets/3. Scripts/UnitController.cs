@@ -29,7 +29,7 @@ public class UnitController : MonoBehaviour
     /// <summary>
     /// [몬스터용] 데이터 셋업 함수
     /// </summary>
-    public void Setup(MonsterDataSO data)
+    public void Setup(EnemyDataSO data)
     {
         unitName = data.monsterName;
         maxHP = data.maxHealth;
@@ -45,7 +45,7 @@ public class UnitController : MonoBehaviour
     /// <summary>
     /// [플레이어용] 데이터 셋업 함수 (오버로딩)
     /// </summary>
-    public void Setup(CharacterDataSO data)
+    public void Setup(PlayerDataSO data)
     {
         unitName = data.playerName;
         maxHP = data.maxHealth;

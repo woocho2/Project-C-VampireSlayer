@@ -10,16 +10,16 @@ public class GameManager : MonoBehaviour
     [Header("플레이어 데이터")]
     // 게임 전체에서 하나로 유지되어야 할 플레이어 데이터를 보관합니다.
     // 에디터에서 생성한 PlayerDataSO 에셋을 여기에 할당합니다.
-    public CharacterDataSO playerData;
+    public PlayerDataSO playerData;
 
     [Header("파티 시스템 (신규")]
-    public CharacterDataSO[] partyMembers;
+    public PlayerDataSO[] partyMembers;
 
     public int currentPartyIndex = 0;
 
     [Header("전투 진입 데이터")]
     // 필드에서 부딪힌 몬스터의 데이터를 배틀 씬으로 넘겨주기 위해 임시 보관합니다.
-    public MonsterDataSO encounteredMonster;
+    public EnemyDataSO encounteredMonster;
 
     private bool isTransitioning = false;
 
@@ -38,7 +38,7 @@ public class GameManager : MonoBehaviour
     }
 
     // 필드 몬스터와 충돌 시 호출되는 씬 전환 로직
-    public void StartBattleTransition(MonsterDataSO targetMonsterData)
+    public void StartBattleTransition(EnemyDataSO targetMonsterData)
     {
         if (isTransitioning) return;
 

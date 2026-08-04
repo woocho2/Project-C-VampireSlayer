@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3457ddcb89af18419c95d66864e0931, type: 3}
-  m_Name: Pirate
+  m_Name: Lif Arbind
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
   playerName: Hero
   playerPrefab: {fileID: 5596614905003383511, guid: 1290a07f29aec5c46a14621ed67c4140, type: 3}
@@ -18,3 +18,11 @@ MonoBehaviour:
   maxHealth: 100
   currentHealth: 100
   baseDamage: 15
+  walkSpeed: 4
+  runSpeed: 10
+  jumpHeight: 2
+  gravity: -9.81
+  rotationSpeed: 10
+  acceleration: 15
+  deceleration: 2
+  startBattleTime: 10
