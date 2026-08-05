@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3457ddcb89af18419c95d66864e0931, type: 3}
-  m_Name: Lif Arbind
+  m_Name: David F. Bilen
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
-  playerName: Hero
+  playerName: David F. Bilen
   playerPrefab: {fileID: 5596614905003383511, guid: 1290a07f29aec5c46a14621ed67c4140, type: 3}
   fieldPlayerPrefab: {fileID: 916288567358151568, guid: cff03d4d411e8ea43b356f41925db42e, type: 3}
+  playerturnSprite: {fileID: 21300000, guid: 237feedaa70accf4094461aa81fb5e77, type: 3}
   maxHealth: 100
   currentHealth: 100
   baseDamage: 15
+  baseSpeed: 15
   walkSpeed: 4
   runSpeed: 10
   jumpHeight: 2

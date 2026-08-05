@@ -10,11 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3457ddcb89af18419c95d66864e0931, type: 3}
-  m_Name: Girl
+  m_Name: Teres W. Most
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
   playerName: Girl
   playerPrefab: {fileID: 6897806069931835909, guid: f15fbb5121566f140adae490aac89e6f, type: 3}
   fieldPlayerPrefab: {fileID: 3719727434306024922, guid: 6211f64209b6a33469dd012f60a740d2, type: 3}
+  playerturnSprite: {fileID: 21300000, guid: 55495fa9a9bf8374c989e41acbeb31e1, type: 3}
   maxHealth: 100
   currentHealth: 100
   baseDamage: 15
+  baseSpeed: 10
+  walkSpeed: 4
+  runSpeed: 10
+  jumpHeight: 2
+  gravity: -9.81
+  rotationSpeed: 5
+  acceleration: 15
+  deceleration: 2
+  startBattleTime: 10

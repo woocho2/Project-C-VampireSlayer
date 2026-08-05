@@ -15,6 +15,15 @@ MonoBehaviour:
   monsterID: 1
   monsterName: Vampire
   monsterPrefab: {fileID: 5327564128475175078, guid: 0b946b17e568645418b77d06617b1ff6, type: 3}
+  monsterturnSprite: {fileID: 21300000, guid: 39ade200ecfc54f48a3b39a51ab030a2, type: 3}
   maxHealth: 100
+  currentHealth: 0
   baseDamage: 5
-  speed: 10
+  baseSpeed: 8
+  patrolRadius: 10
+  patrolSpeed: 3
+  chaseSpeed: 8
+  detectionRadius: 10
+  maxChaseDistance: 20
+  viewAngle: 120
+  eyeHeight: 1.5

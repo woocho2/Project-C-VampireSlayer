@@ -1,24 +1,37 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using TMPro; // TextMeshPro를 사용하기 위한 네임스페이스
+using UnityEngine.UI;
+using TMPro;
 
 public class UIManager_Battle : MonoBehaviour
 {
-    // BattleManager 등 외부에서 쉽게 접근할 수 있도록 싱글톤 패턴 적용
     public static UIManager_Battle Instance { get; private set; }
 
     [Header("전투 시작 패널 UI")]
-    public GameObject battleStartPanel;         // 화면을 덮는 전체 패널 오브젝트
-    public TextMeshProUGUI[] warningTexts;      // 반짝거릴 Warning 텍스트들 (배열로 선언하여 여러 개 동시 제어)
-    public TextMeshProUGUI monsterNameText;     // 하단에 몬스터 이름이 찍힐 텍스트
+    public GameObject battleStartPanel;
+    public TextMeshProUGUI[] warningTexts;
+    public TextMeshProUGUI monsterNameText;
 
     [Header("연출 설정")]
-    public float blinkSpeed = 5f;               // 글씨가 깜빡이는 속도
-    public float panelDisplayTime = 3f;         // 패널이 화면에 떠 있는 총 시간
+    public float blinkSpeed = 5f;
+    public float panelDisplayTime = 3f;
+
+    // ==========================================
+    // [수정] 턴 오더 UI - 프리팹 동적 생성 방식
+    // ==========================================
+    [Header("턴 오더 UI 설정")]
+    public GameObject turnSlotPrefab;     // 마스크와 이미지가 세팅된 턴 슬롯 프리팹 1개
+    public Transform turnSlotParent;      // Vertical Layout Group이 부착된 빈 부모 오브젝트
+
+    // 위에서부터 아래로 적용될 알파(투명도) 값을 배열로 고정해 둡니다.
+    private readonly float[] alphaLevels = { 1.0f, 0.8f, 0.6f, 0.4f, 0.2f };
+
+    // 코드로 찍어낸 5개의 프리팹에서 '실제 초상화 Image 컴포넌트'만 빼서 보관할 리스트입니다.
+    private List<Image> spawnedPortraitSlots = new List<Image>();
 
     private void Awake()
     {
-        // 싱글톤 초기화
         if (Instance == null)
         {
             Instance = this;
@@ -29,16 +42,48 @@ public class UIManager_Battle : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        // 씬이 시작되면 프리팹을 이용해 5개의 빈 턴 슬롯을 미리 생성(풀링)해 둡니다.
+        InitializeTurnSlots();
+    }
+
     /// <summary>
-    /// BattleManager가 전투 씬 진입 직후 몬스터 이름을 넘겨주며 호출할 함수입니다.
+    /// 프리팹을 복제하여 5개의 턴 슬롯을 생성하는 함수입니다.
     /// </summary>
+    private void InitializeTurnSlots()
+    {
+        if (turnSlotPrefab == null || turnSlotParent == null)
+        {
+            Debug.LogError("턴 슬롯 프리팹 또는 부모(Vertical Layout Group)가 할당되지 않았습니다.");
+            return;
+        }
+
+        for (int i = 0; i < 5; i++)
+        {
+            // 부모 아래에 프리팹을 1개 생성합니다.
+            GameObject slotGO = Instantiate(turnSlotPrefab, turnSlotParent);
+
+            // [매우 중요] 마스크가 있는 프리팹의 경우 최상단은 Mask(Image)이고, 자식이 실제 사진(Image)입니다.
+            // slotGO.transform.GetChild(0)을 사용하여 자식 오브젝트의 Image 컴포넌트를 가져옵니다.
+            Image portraitImage = slotGO.transform.GetChild(0).GetComponent<Image>();
+
+            if (portraitImage != null)
+            {
+                spawnedPortraitSlots.Add(portraitImage);
+                slotGO.SetActive(false); // 처음에는 안 보이게 꺼둡니다.
+            }
+            else
+            {
+                Debug.LogError("프리팹의 첫 번째 자식 오브젝트에 Image 컴포넌트가 없습니다!");
+            }
+        }
+    }
+
     public void PlayBattleStartUI(string enemyName)
     {
-        // 1. 패널을 활성화하고 몬스터 이름을 텍스트에 박아넣습니다.
         battleStartPanel.SetActive(true);
         monsterNameText.text = enemyName;
-
-        // 2. 깜빡임 효과 및 자동 종료 코루틴을 시작합니다.
         StartCoroutine(BattleStartSequence());
     }
 
@@ -46,15 +91,11 @@ public class UIManager_Battle : MonoBehaviour
     {
         float timer = 0f;
 
-        // panelDisplayTime(예: 3초) 동안 반복하며 텍스트를 깜빡이게 합니다.
         while (timer < panelDisplayTime)
         {
             timer += Time.deltaTime;
-
-            // Mathf.PingPong을 이용하여 0 ~ 1 사이의 값을 부드럽게 왕복시킵니다.
             float alphaValue = Mathf.PingPong(Time.time * blinkSpeed, 1f);
 
-            // Warning 텍스트 배열을 순회하며 알파(투명도) 값을 실시간으로 갱신합니다.
             foreach (var text in warningTexts)
             {
                 if (text != null)
@@ -65,7 +106,6 @@ public class UIManager_Battle : MonoBehaviour
                 }
             }
 
-            // 몬스터 이름 텍스트도 같이 깜빡이게 적용합니다.
             if (monsterNameText != null)
             {
                 Color c = monsterNameText.color;
@@ -73,10 +113,39 @@ public class UIManager_Battle : MonoBehaviour
                 monsterNameText.color = c;
             }
 
-            yield return null; // 다음 프레임까지 대기
+            yield return null;
         }
 
-        // 연출 시간이 모두 끝나면 패널을 다시 비활성화하여 화면에서 지웁니다.
         battleStartPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// BattleManager에서 턴 순서가 계산될 때마다 호출하여 초상화와 투명도를 갱신합니다.
+    /// </summary>
+    public void UpdateTurnOrderUI(List<Sprite> turnSprites)
+    {
+        if (spawnedPortraitSlots.Count == 0) return;
+
+        for (int i = 0; i < spawnedPortraitSlots.Count; i++)
+        {
+            if (i < turnSprites.Count && turnSprites[i] != null)
+            {
+                // 생성된 프리팹 전체(부모)를 활성화합니다.
+                spawnedPortraitSlots[i].transform.parent.gameObject.SetActive(true);
+
+                // 스프라이트 사진을 덮어씌웁니다.
+                spawnedPortraitSlots[i].sprite = turnSprites[i];
+
+                // 고정해둔 배열에서 알파값을 가져와 적용합니다.
+                Color slotColor = spawnedPortraitSlots[i].color;
+                slotColor.a = alphaLevels[i];
+                spawnedPortraitSlots[i].color = slotColor;
+            }
+            else
+            {
+                // 데이터가 비어있다면 프리팹(부모) 전체를 화면에서 숨깁니다.
+                spawnedPortraitSlots[i].transform.parent.gameObject.SetActive(false);
+            }
+        }
     }
 }

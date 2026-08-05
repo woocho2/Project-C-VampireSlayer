@@ -277,7 +277,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 6c536b23d27418f47bdb5ee3eba300f1, type: 2}
     - target: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       propertyPath: m_Name
-      value: Hero_Battle
+      value: B_David F. Bilen
       objectReference: {fileID: 0}
     - target: {fileID: 8385929430952728539, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       propertyPath: m_IsActive
@@ -338,6 +338,9 @@ MonoBehaviour:
   unitName: Hero
   maxHP: 100
   currentHP: 0
+  unitPortrait: {fileID: 21300000, guid: 237feedaa70accf4094461aa81fb5e77, type: 3}
+  speed: 100
+  currentActionValue: 0
   hpSlider: {fileID: 8755195825469843315}
 --- !u!114 &7570881387809839232
 MonoBehaviour:

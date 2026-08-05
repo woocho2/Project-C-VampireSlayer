@@ -132,8 +132,79 @@ public class BattleManager : MonoBehaviour
 
         yield return new WaitForSeconds(1.5f);
 
+        CalculateAndDisplayTurnOrder();
+
         state = BattleState.PlayerTurn;
         PlayerTurn();
+    }
+
+    /// <summary>
+    /// [추가] 모든 유닛의 속도를 계산하여 UI 매니저로 전달합니다.
+    /// (현재는 임시로 소환된 순서대로 이미지를 넘겨주는 형태입니다.)
+    /// </summary>
+    private void CalculateAndDisplayTurnOrder()
+    {
+        List<Sprite> predictedTurns = new List<Sprite>();
+
+        // 1. 살아있는 모든 유닛을 하나의 리스트로 취합합니다.
+        List<UnitController> allActiveUnits = new List<UnitController>();
+        foreach (UnitController unit in playerUnits)
+        {
+            if (unit.currentHP > 0) allActiveUnits.Add(unit);
+        }
+        if (enemyUnitScript != null && enemyUnitScript.currentHP > 0)
+        {
+            allActiveUnits.Add(enemyUnitScript);
+        }
+
+        // 전투 가능한 유닛이 없으면 중단
+        if (allActiveUnits.Count == 0) return;
+
+        // 2. 원본 데이터를 훼손하지 않기 위해 시뮬레이션용 가상 딕셔너리를 만듭니다.
+        Dictionary<UnitController, float> simulatedAVs = new Dictionary<UnitController, float>();
+        foreach (UnitController unit in allActiveUnits)
+        {
+            simulatedAVs.Add(unit, unit.currentActionValue);
+        }
+
+        // 3. 향후 5턴(UI 슬롯 개수) 치를 예측하는 시뮬레이션 루프
+        for (int i = 0; i < 5; i++)
+        {
+            UnitController nextUnit = null;
+            float lowestAV = float.MaxValue;
+
+            // 가상 딕셔너리에서 현재 행동 수치가 가장 낮은(턴이 가장 먼저 오는) 유닛을 찾습니다.
+            foreach (var kvp in simulatedAVs)
+            {
+                if (kvp.Value < lowestAV)
+                {
+                    lowestAV = kvp.Value;
+                    nextUnit = kvp.Key;
+                }
+            }
+
+            if (nextUnit != null)
+            {
+                // UI에 표시하기 위해 해당 유닛의 초상화를 리스트에 추가합니다.
+                predictedTurns.Add(nextUnit.unitPortrait);
+
+                // 시간의 흐름 적용: 모든 유닛의 AV에서 가장 낮은 수치(lowestAV)만큼 빼줍니다.
+                List<UnitController> keys = new List<UnitController>(simulatedAVs.Keys);
+                foreach (UnitController key in keys)
+                {
+                    simulatedAVs[key] -= lowestAV;
+                }
+
+                // 턴을 진행한 유닛은 행동 수치를 다시 초기화하여 맨 뒤로 보냅니다.
+                simulatedAVs[nextUnit] += (10000f / nextUnit.speed);
+            }
+        }
+
+        // 4. 완성된 예측 리스트를 기존에 만들어둔 UI 매니저로 넘겨 화면에 그립니다.
+        if (UIManager_Battle.Instance != null)
+        {
+            UIManager_Battle.Instance.UpdateTurnOrderUI(predictedTurns);
+        }
     }
 
     private void PlayerTurn()

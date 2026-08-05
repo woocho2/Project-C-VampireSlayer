@@ -7,11 +7,13 @@ public class PlayerDataSO : ScriptableObject
     public string playerName = "Hero";
     public GameObject playerPrefab;
     public GameObject fieldPlayerPrefab;
+    public Sprite playerturnSprite;
 
     [Header("전투 스탯")]
     public int maxHealth = 100;
     public int currentHealth = 100;
     public int baseDamage = 15;
+    public int baseSpeed = 5;
 
     [Header("필드 이동 및 회전 수치")]
     public float walkSpeed = 4f;

@@ -170,7 +170,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8899053571901880096, guid: 44bfc9ee2c6c865469b36a6061e8de6b, type: 3}
       propertyPath: m_Name
-      value: Vampire_Battle
+      value: B_Vampire
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -204,6 +204,9 @@ MonoBehaviour:
   unitName: Vapire
   maxHP: 300
   currentHP: 0
+  unitPortrait: {fileID: 21300000, guid: 39ade200ecfc54f48a3b39a51ab030a2, type: 3}
+  speed: 100
+  currentActionValue: 0
   hpSlider: {fileID: 3366676842525776080}
 --- !u!4 &9009936222859987989 stripped
 Transform:

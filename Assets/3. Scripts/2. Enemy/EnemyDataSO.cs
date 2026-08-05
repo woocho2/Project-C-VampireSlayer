@@ -9,11 +9,13 @@ public class EnemyDataSO : ScriptableObject
     public int monsterID;                     // 몬스터 고유 ID
     public string monsterName;            // 몬스터 이름
     public GameObject monsterPrefab;  // 배틀 씬에서 스폰할 몬스터의 외형 프리팹
+    public Sprite monsterturnSprite;
 
     [Header("전투 스탯")]
     public int maxHealth;            // 최대 체력
+    public int currentHealth;        // 현재 체력
     public int baseDamage;         // 기본 공격력
-    public int speed;                  // 행동 속도 (턴 우선순위에 사용)
+    public int baseSpeed;            // 행동 속도 (턴 우선순위에 사용)
 
     [Header("필드 이동 및 탐지 설정")]
     public float patrolRadius = 10f;         // 배회 반경

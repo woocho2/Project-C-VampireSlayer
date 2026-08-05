@@ -57,6 +57,10 @@ PrefabInstance:
       value: Girl_Field
       objectReference: {fileID: 0}
     - target: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
       propertyPath: m_TagString
       value: Player
       objectReference: {fileID: 0}
@@ -78,7 +82,19 @@ PrefabInstance:
       addedObject: {fileID: 6563327264928610330}
     - targetCorrespondingSourceObject: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7347937254140080074}
+      addedObject: {fileID: 3480316188104382864}
+    - targetCorrespondingSourceObject: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4819434674811356498}
+    - targetCorrespondingSourceObject: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8383855644347175278}
+    - targetCorrespondingSourceObject: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5872139147650897529}
+    - targetCorrespondingSourceObject: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2179622752991768927}
   m_SourcePrefab: {fileID: 100100000, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
 --- !u!1 &3719727434306024922 stripped
 GameObject:
@@ -190,7 +206,7 @@ MonoBehaviour:
   m_DefaultActionMap: 
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &7347937254140080074
+--- !u!114 &3480316188104382864
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -199,15 +215,56 @@ MonoBehaviour:
   m_GameObject: {fileID: 3719727434306024922}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 631e9cc701ee4174e8a678f6309c5512, type: 3}
+  m_Script: {fileID: 11500000, guid: 47841457c1ea3d44ba7ff2b251752ad6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  walkSpeed: 4
-  runSpeed: 10
-  jumpHeight: 2
-  gravity: -9.81
-  rotationSpeed: 5
-  acceleration: 15
-  deceleration: 2
-  startBattleTime: 10
-  m_swordController: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputController
+--- !u!114 &4819434674811356498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3719727434306024922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aa3facc9f890884e8fc0db334429f32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAniController
+--- !u!114 &8383855644347175278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3719727434306024922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7ee36819c6a3d4dbd1b70497d0f0be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMoveController
+--- !u!114 &5872139147650897529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3719727434306024922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c531e67184eb7546ac9511a32d2c794, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatController
+--- !u!114 &2179622752991768927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3719727434306024922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 087d0c9c21a3fa14c84ab9a60e1acb9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponController
+  handSword: {fileID: 0}
+  scabbardSword: {fileID: 0}

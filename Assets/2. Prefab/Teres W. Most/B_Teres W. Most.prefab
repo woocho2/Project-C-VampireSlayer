@@ -187,7 +187,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
       propertyPath: m_Name
-      value: Girl_Battle
+      value: B_Teres W. Most
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -225,4 +225,7 @@ MonoBehaviour:
   unitName: Girl
   maxHP: 100
   currentHP: 0
+  unitPortrait: {fileID: 21300000, guid: 55495fa9a9bf8374c989e41acbeb31e1, type: 3}
+  speed: 100
+  currentActionValue: 0
   hpSlider: {fileID: 5954477391892732255}

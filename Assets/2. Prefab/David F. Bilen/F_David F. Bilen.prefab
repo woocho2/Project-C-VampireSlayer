@@ -307,7 +307,16 @@ PrefabInstance:
       addedObject: {fileID: -41661948236303059}
     - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -3203860100216046183}
+      addedObject: {fileID: 3630941324254234185}
+    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2278821394203964222}
+    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3933702662377738235}
+    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 772356457979748202}
     - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       insertIndex: -1
       addedObject: {fileID: -2941736888870559866}
@@ -422,7 +431,7 @@ MonoBehaviour:
   m_DefaultActionMap: 
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &-3203860100216046183
+--- !u!114 &3630941324254234185
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -431,18 +440,45 @@ MonoBehaviour:
   m_GameObject: {fileID: 916288567358151568}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 631e9cc701ee4174e8a678f6309c5512, type: 3}
+  m_Script: {fileID: 11500000, guid: 47841457c1ea3d44ba7ff2b251752ad6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  walkSpeed: 4
-  runSpeed: 10
-  jumpHeight: 2
-  gravity: -9.81
-  rotationSpeed: 5
-  acceleration: 15
-  deceleration: 2
-  startBattleTime: 10
-  m_swordController: {fileID: -2941736888870559866}
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputController
+--- !u!114 &2278821394203964222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916288567358151568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aa3facc9f890884e8fc0db334429f32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAniController
+--- !u!114 &3933702662377738235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916288567358151568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7ee36819c6a3d4dbd1b70497d0f0be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMoveController
+--- !u!114 &772356457979748202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916288567358151568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c531e67184eb7546ac9511a32d2c794, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatController
 --- !u!114 &-2941736888870559866
 MonoBehaviour:
   m_ObjectHideFlags: 0
