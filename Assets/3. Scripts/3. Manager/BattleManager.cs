@@ -1,23 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.Playables;
 
-public enum BattleState { Start, PlayerTurn, EnemyTurn, Won, Lost }
+// 전투의 전체적인 상태를 나타내는 열거형
+public enum BattleState { Start, TurnProgress, Won, Lost }
 
 public class BattleManager : MonoBehaviour
 {
     [Header("전투 상태 관리")]
-    public BattleState state;
+    public BattleState state; // 현재 전투 상태
 
-    [Header("스폰 위치 설정 (다중)")]
-    public Transform[] playerStations;
-    public Transform enemyStation;
+    [Header("스폰 위치 설정")]
+    public Transform[] playerStations; // 아군 배치 위치 목록
+    public Transform enemyStation; // 적 배치 위치
 
-    // 소환된 파티원들의 스크립트를 담아둘 리스트입니다.
-    private List<UnitController> playerUnits = new List<UnitController>();
-    private UnitController enemyUnitScript;
+    [Header("연출 설정")]
+    public PlayableDirector introDirector; // 전투 시작 시네마틱 연출 컴포넌트
 
-    public GameObject monsterCloseUpCamera;
+    private List<UnitController> playerUnits = new List<UnitController>(); // 생성된 아군 유닛 리스트
+    private UnitController enemyUnitScript; // 생성된 적 유닛 컨트롤러
 
     private void Start()
     {
@@ -25,6 +28,7 @@ public class BattleManager : MonoBehaviour
         StartCoroutine(SetupBattle());
     }
 
+    // 전투 초기화 및 캐릭터 스폰, 시작 연출을 담당하는 코루틴
     private IEnumerator SetupBattle()
     {
         if (GameManager.Instance == null)
@@ -33,13 +37,12 @@ public class BattleManager : MonoBehaviour
             yield break;
         }
 
-        // 1. 파티원 필터링 및 순차 생성
         PlayerDataSO[] party = GameManager.Instance.partyMembers;
         int stationIndex = 0;
 
+        // 파티원 데이터를 순회하며 살아있는 아군을 지정된 자리에 생성
         for (int i = 0; i < party.Length; i++)
         {
-            // 빈 슬롯이 아니며, 살아있고, 남은 스폰 자리가 있을 때만 소환합니다.
             if (party[i] != null && party[i].currentHealth > 0 && stationIndex < playerStations.Length)
             {
                 GameObject playerGO = Instantiate(party[i].playerPrefab, playerStations[stationIndex].position, playerStations[stationIndex].rotation);
@@ -49,131 +52,289 @@ public class BattleManager : MonoBehaviour
                 {
                     unit.Setup(party[i]);
                     playerUnits.Add(unit);
-                    Debug.Log(unit.unitName + " 준비 완료! (배치 자리: " + stationIndex + ")");
                 }
-
                 stationIndex++;
             }
         }
 
-        // 2. 예외 처리 (전멸 상태 검사)
+        // 아군이 전멸 상태라면 즉시 패배 처리
         if (playerUnits.Count == 0)
         {
-            Debug.LogError("전투 가능한 파티원이 없습니다. 게임 오버 씬으로 이동해야 합니다.");
             state = BattleState.Lost;
             EndBattle();
             yield break;
         }
 
-        // 3. 몬스터 생성 및 셋업 (누락되었던 로직 복구)
+        // 몬스터 생성 및 데이터 세팅
         EnemyDataSO m_eData = GameManager.Instance.encounteredMonster;
-        GameObject enemyGO = null; // 아래 회전 로직에서 참조할 수 있도록 지역 변수로 선언합니다.
 
         if (m_eData != null && m_eData.monsterPrefab != null)
         {
-            enemyGO = Instantiate(m_eData.monsterPrefab, enemyStation.position, enemyStation.rotation);
+            GameObject enemyGO = Instantiate(m_eData.monsterPrefab, enemyStation.position, enemyStation.rotation);
             enemyUnitScript = enemyGO.GetComponent<UnitController>();
 
             if (enemyUnitScript != null)
             {
                 enemyUnitScript.Setup(m_eData);
-                Debug.Log(enemyUnitScript.unitName + "이(가) 나타났다!");
             }
+        }
+
+        // 전투 시작 UI 호출
+        if (BattleUIManager.Instance != null)
+        {
+            BattleUIManager.Instance.PlayBattleStartUI(m_eData.name);
+        }
+
+        // 시네마틱 연출 재생 및 완료 대기
+        if (introDirector != null)
+        {
+            introDirector.Play();
+            yield return new WaitUntil(() => introDirector.state != PlayState.Playing);
+        }
+
+        // 연출 종료 시 카메라가 메인 뷰로 안전하게 복귀하도록 BaseCamera 우선순위 조정
+        if (BattleCameraManager.Instance != null)
+        {
+            BattleCameraManager.Instance.ResetToMainView();
+            if (BattleCameraManager.Instance.BaseCamera != null)
+            {
+                BattleCameraManager.Instance.BaseCamera.Priority = 15;
+            }
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        if (BattleCameraManager.Instance != null && BattleCameraManager.Instance.BaseCamera != null)
+        {
+            BattleCameraManager.Instance.BaseCamera.Priority = 10;
+        }
+
+        // 본격적인 턴제 루프 진입
+        state = BattleState.TurnProgress;
+        StartCoroutine(TurnLoopRoutine());
+    }
+
+    // 타임라인에서 호출: 적이 아군을 바라보도록 회전
+    public void Signal_LookAtPlayer()
+    {
+        if (enemyUnitScript != null && playerUnits.Count > 0)
+        {
+            Transform targetPlayer = playerUnits[0].transform;
+            StartCoroutine(SmoothLookAtRoutine(enemyUnitScript.transform, targetPlayer.position, 0.5f));
         }
         else
         {
-            Debug.LogError("GameManager에서 몬스터 데이터를 불러오지 못했습니다.");
+            Debug.LogError("조건 실패: 몬스터나 파티원 데이터가 비어있습니다!");
         }
+    }
 
-        // --- 연출 시작 ---
-        if (monsterCloseUpCamera != null) monsterCloseUpCamera.SetActive(true);
+    // 부드러운 회전 처리를 위한 코루틴
+    private IEnumerator SmoothLookAtRoutine(Transform enemyTransform, Vector3 targetPosition, float duration)
+    {
+        Quaternion startRotation = enemyTransform.rotation;
+        Vector3 directionToPlayer = (targetPosition - enemyTransform.position).normalized;
+        directionToPlayer.y = 0;
 
-        // (UI 연출 로직이 있다면 이 부분에 추가)
-        UIManager_Battle.Instance.PlayBattleStartUI(m_eData.name);
+        if (directionToPlayer == Vector3.zero) yield break;
 
-        yield return new WaitForSeconds(1f);
+        Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
 
-        // 4. 몬스터가 파티의 '첫 번째' 플레이어를 향해 회전하는 로직
-        if (enemyGO != null && playerUnits.Count > 0)
+        float elapsed = 0f;
+        while (elapsed < duration)
         {
-            float turnDuration = 1.0f;
-            float elapsed = 0f;
-            Quaternion startRotation = enemyGO.transform.rotation;
-
-            // 시선을 리스트의 0번(리더) 캐릭터에게 맞춥니다.
-            Vector3 directionToPlayer = (playerUnits[1].transform.position - enemyGO.transform.position).normalized;
-            directionToPlayer.y = 0;
-            Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
-
-            while (elapsed < turnDuration)
-            {
-                elapsed += Time.deltaTime;
-                enemyGO.transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed / turnDuration);
-                yield return null;
-            }
-            enemyGO.transform.rotation = targetRotation;
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            enemyTransform.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
+            yield return null;
         }
 
-        yield return new WaitForSeconds(1f);
+        enemyTransform.rotation = targetRotation;
+    }
 
-        if (monsterCloseUpCamera != null) monsterCloseUpCamera.SetActive(false);
-
-        yield return new WaitForSeconds(2f);
-
-        // 5. 소환된 '모든' 파티원에게 동시에 발도 애니메이션 트리거를 보냅니다.
+    // 타임라인에서 호출: 아군 발도 애니메이션 트리거
+    public void Signal_DrawSwords()
+    {
         foreach (UnitController unit in playerUnits)
         {
             Animator playerAnim = unit.GetComponentInChildren<Animator>();
-            if (playerAnim != null)
-            {
-                playerAnim.SetTrigger("DrawSword");
-            }
+            if (playerAnim != null) playerAnim.SetTrigger("DrawSword");
         }
-
-        yield return new WaitForSeconds(1.5f);
-
-        CalculateAndDisplayTurnOrder();
-
-        state = BattleState.PlayerTurn;
-        PlayerTurn();
     }
 
-    /// <summary>
-    /// [추가] 모든 유닛의 속도를 계산하여 UI 매니저로 전달합니다.
-    /// (현재는 임시로 소환된 순서대로 이미지를 넘겨주는 형태입니다.)
-    /// </summary>
-    private void CalculateAndDisplayTurnOrder()
+    // 턴제 전투의 핵심 루프 코루틴
+    private IEnumerator TurnLoopRoutine()
     {
-        List<Sprite> predictedTurns = new List<Sprite>();
+        while (state == BattleState.TurnProgress)
+        {
+            List<UnitController> aliveUnits = GetAliveUnits();
 
-        // 1. 살아있는 모든 유닛을 하나의 리스트로 취합합니다.
-        List<UnitController> allActiveUnits = new List<UnitController>();
+            if (CheckBattleEnd(aliveUnits)) yield break;
+
+            UnitController nextTurnUnit = GetNextUnitAndAdvanceTime(aliveUnits);
+            bool isTurnFinished = false;
+
+            // 아군 턴
+            if (playerUnits.Contains(nextTurnUnit))
+            {
+                PlayerBattleController pController = nextTurnUnit.GetComponent<PlayerBattleController>();
+                if (pController != null)
+                {
+                    if (BattleCameraManager.Instance != null)
+                    {
+                        BattleCameraManager.Instance.SetPlayerBackView(nextTurnUnit.transform, enemyUnitScript.transform);
+                    }
+
+                    // 카메라가 플레이어 등 뒤로 완전히 이동할 때까지 대기
+                    CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
+                    if (brain != null)
+                    {
+                        float timeout = 0.5f;
+                        float elapsed = 0f;
+                        while (!brain.IsBlending && elapsed < timeout)
+                        {
+                            elapsed += Time.deltaTime;
+                            yield return null;
+                        }
+                        yield return new WaitUntil(() => !brain.IsBlending);
+                    }
+                    else
+                    {
+                        yield return new WaitForSeconds(0.5f);
+                    }
+
+                    CalculateAndDisplayTurnOrder(aliveUnits);
+                    pController.StartTurn(enemyUnitScript, () => { isTurnFinished = true; });
+                }
+            }
+            // 적군 턴
+            else
+            {
+                EnemyBattleController eController = nextTurnUnit.GetComponent<EnemyBattleController>();
+                if (eController != null)
+                {
+                    if (BattleCameraManager.Instance != null)
+                    {
+                        BattleCameraManager.Instance.SetEnemyView(nextTurnUnit.transform);
+                    }
+                    eController.ExecuteTurn(playerUnits, () => { isTurnFinished = true; });
+                }
+            }
+
+            // 턴 행동(공격, 스킬 등) 완료 대기
+            yield return new WaitUntil(() => isTurnFinished);
+
+            // 행동 종료 후 수치 초기화
+            nextTurnUnit.InitializeActionValue();
+
+            // 카메라 메인 뷰 복귀 및 튐 현상 방지를 위한 블렌딩 완료 대기 로직 적용
+            if (BattleCameraManager.Instance != null)
+            {
+                BattleCameraManager.Instance.ResetToMainView();
+            }
+
+            CinemachineBrain mainBrain = Camera.main.GetComponent<CinemachineBrain>();
+            if (mainBrain != null)
+            {
+                float timeout = 0.5f;
+                float elapsed = 0f;
+                while (!mainBrain.IsBlending && elapsed < timeout)
+                {
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+
+                // 메인 뷰로 복귀하는 전환이 끝날 때까지 대기하여 다음 턴 카메라와 충돌 방지
+                yield return new WaitUntil(() => !mainBrain.IsBlending);
+            }
+            else
+            {
+                yield return new WaitForSeconds(1.5f);
+            }
+        }
+    }
+
+    // 생존 유닛 추출
+    private List<UnitController> GetAliveUnits()
+    {
+        List<UnitController> aliveUnits = new List<UnitController>();
         foreach (UnitController unit in playerUnits)
         {
-            if (unit.currentHP > 0) allActiveUnits.Add(unit);
+            if (unit.currentHP > 0) aliveUnits.Add(unit);
         }
         if (enemyUnitScript != null && enemyUnitScript.currentHP > 0)
         {
-            allActiveUnits.Add(enemyUnitScript);
+            aliveUnits.Add(enemyUnitScript);
+        }
+        return aliveUnits;
+    }
+
+    // 전투 종료 판정
+    private bool CheckBattleEnd(List<UnitController> aliveUnits)
+    {
+        bool hasPlayer = false;
+        bool hasEnemy = false;
+
+        foreach (UnitController unit in aliveUnits)
+        {
+            if (playerUnits.Contains(unit)) hasPlayer = true;
+            else hasEnemy = true;
         }
 
-        // 전투 가능한 유닛이 없으면 중단
-        if (allActiveUnits.Count == 0) return;
+        if (!hasPlayer)
+        {
+            state = BattleState.Lost;
+            EndBattle();
+            return true;
+        }
+        if (!hasEnemy)
+        {
+            state = BattleState.Won;
+            EndBattle();
+            return true;
+        }
 
-        // 2. 원본 데이터를 훼손하지 않기 위해 시뮬레이션용 가상 딕셔너리를 만듭니다.
+        return false;
+    }
+
+    // 행동치 계산 및 다음 턴 유닛 반환
+    private UnitController GetNextUnitAndAdvanceTime(List<UnitController> aliveUnits)
+    {
+        UnitController nextUnit = null;
+        float lowestAV = float.MaxValue;
+
+        foreach (UnitController unit in aliveUnits)
+        {
+            if (unit.currentActionValue < lowestAV)
+            {
+                lowestAV = unit.currentActionValue;
+                nextUnit = unit;
+            }
+        }
+
+        foreach (UnitController unit in aliveUnits)
+        {
+            unit.currentActionValue -= lowestAV;
+        }
+
+        return nextUnit;
+    }
+
+    // 턴 오더 예측 및 UI 표시
+    private void CalculateAndDisplayTurnOrder(List<UnitController> aliveUnits)
+    {
+        List<Sprite> predictedTurns = new List<Sprite>();
         Dictionary<UnitController, float> simulatedAVs = new Dictionary<UnitController, float>();
-        foreach (UnitController unit in allActiveUnits)
+
+        foreach (UnitController unit in aliveUnits)
         {
             simulatedAVs.Add(unit, unit.currentActionValue);
         }
 
-        // 3. 향후 5턴(UI 슬롯 개수) 치를 예측하는 시뮬레이션 루프
         for (int i = 0; i < 5; i++)
         {
             UnitController nextUnit = null;
             float lowestAV = float.MaxValue;
 
-            // 가상 딕셔너리에서 현재 행동 수치가 가장 낮은(턴이 가장 먼저 오는) 유닛을 찾습니다.
             foreach (var kvp in simulatedAVs)
             {
                 if (kvp.Value < lowestAV)
@@ -185,43 +346,34 @@ public class BattleManager : MonoBehaviour
 
             if (nextUnit != null)
             {
-                // UI에 표시하기 위해 해당 유닛의 초상화를 리스트에 추가합니다.
                 predictedTurns.Add(nextUnit.unitPortrait);
 
-                // 시간의 흐름 적용: 모든 유닛의 AV에서 가장 낮은 수치(lowestAV)만큼 빼줍니다.
                 List<UnitController> keys = new List<UnitController>(simulatedAVs.Keys);
                 foreach (UnitController key in keys)
                 {
                     simulatedAVs[key] -= lowestAV;
                 }
 
-                // 턴을 진행한 유닛은 행동 수치를 다시 초기화하여 맨 뒤로 보냅니다.
                 simulatedAVs[nextUnit] += (10000f / nextUnit.speed);
             }
         }
 
-        // 4. 완성된 예측 리스트를 기존에 만들어둔 UI 매니저로 넘겨 화면에 그립니다.
-        if (UIManager_Battle.Instance != null)
+        if (BattleUIManager.Instance != null)
         {
-            UIManager_Battle.Instance.UpdateTurnOrderUI(predictedTurns);
+            BattleUIManager.Instance.UpdateTurnOrderUI(predictedTurns);
         }
     }
 
-    private void PlayerTurn()
-    {
-        Debug.Log("플레이어 측 턴 시작!");
-        // TODO: 행동 대기 상태 구현
-    }
-
+    // 승패 후처리 로직
     private void EndBattle()
     {
         if (state == BattleState.Won)
         {
-            Debug.Log("전투 승리!");
+            Debug.Log("전투 승리! 보상 화면으로 이동합니다.");
         }
         else if (state == BattleState.Lost)
         {
-            Debug.Log("전투 패배.");
+            Debug.Log("전투 패배. 게임 오버 씬으로 이동합니다.");
         }
     }
 }

@@ -23,8 +23,8 @@ MonoBehaviour:
   walkSpeed: 4
   runSpeed: 10
   jumpHeight: 2
-  gravity: -9.81
+  gravity: -19.62
   rotationSpeed: 10
   acceleration: 15
-  deceleration: 2
+  deceleration: 10
   startBattleTime: 10

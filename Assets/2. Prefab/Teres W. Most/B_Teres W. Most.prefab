@@ -199,6 +199,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5137962105863204934}
+    - targetCorrespondingSourceObject: {fileID: 8691080852592373316, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6994425820285236084}
   m_SourcePrefab: {fileID: 100100000, guid: e56261390357f2b43922c5727c5f0e4b, type: 3}
 --- !u!4 &1994126618141279122 stripped
 Transform:
@@ -229,3 +232,15 @@ MonoBehaviour:
   speed: 100
   currentActionValue: 0
   hpSlider: {fileID: 5954477391892732255}
+--- !u!114 &6994425820285236084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6897806069931835909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41966dc13ad04e14e8df935d505c8d31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBattleController

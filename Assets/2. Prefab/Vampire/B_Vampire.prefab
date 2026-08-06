@@ -183,6 +183,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8899053571901880096, guid: 44bfc9ee2c6c865469b36a6061e8de6b, type: 3}
       insertIndex: -1
       addedObject: {fileID: -1988254194355079101}
+    - targetCorrespondingSourceObject: {fileID: 8899053571901880096, guid: 44bfc9ee2c6c865469b36a6061e8de6b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2382277639031186472}
   m_SourcePrefab: {fileID: 100100000, guid: 44bfc9ee2c6c865469b36a6061e8de6b, type: 3}
 --- !u!1 &5327564128475175078 stripped
 GameObject:
@@ -204,10 +207,22 @@ MonoBehaviour:
   unitName: Vapire
   maxHP: 300
   currentHP: 0
-  unitPortrait: {fileID: 21300000, guid: 39ade200ecfc54f48a3b39a51ab030a2, type: 3}
+  unitPortrait: {fileID: 21300000, guid: 145388c1ef159b146a19df8929bcd1c1, type: 3}
   speed: 100
   currentActionValue: 0
   hpSlider: {fileID: 3366676842525776080}
+--- !u!114 &2382277639031186472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5327564128475175078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 114f303842b58ae4883cb24598ea752b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyBattleController
 --- !u!4 &9009936222859987989 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5735681606060811155, guid: 44bfc9ee2c6c865469b36a6061e8de6b, type: 3}
