@@ -301,10 +301,13 @@ PrefabInstance:
       addedObject: {fileID: -7945541009285631036}
     - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7570881387809839232}
+      addedObject: {fileID: 1140252973481004002}
     - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1140252973481004002}
+      addedObject: {fileID: 3274446180153128764}
+    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7570881387809839232}
   m_SourcePrefab: {fileID: 100100000, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
 --- !u!4 &956491215276419240 stripped
 Transform:
@@ -345,6 +348,30 @@ MonoBehaviour:
   speed: 100
   currentActionValue: 0
   hpSlider: {fileID: 8755195825469843315}
+--- !u!114 &1140252973481004002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5596614905003383511}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41966dc13ad04e14e8df935d505c8d31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBattleController
+--- !u!114 &3274446180153128764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5596614905003383511}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aa3facc9f890884e8fc0db334429f32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAniController
 --- !u!114 &7570881387809839232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -359,18 +386,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SwordController
   handSword: {fileID: 7375133183429774599}
   scabbardSword: {fileID: 8503329324416198620}
---- !u!114 &1140252973481004002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5596614905003383511}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41966dc13ad04e14e8df935d505c8d31, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerBattleController
 --- !u!1001 &3705602219192418787
 PrefabInstance:
   m_ObjectHideFlags: 0

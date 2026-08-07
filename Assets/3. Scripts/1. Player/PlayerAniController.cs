@@ -25,10 +25,10 @@ public class PlayerAniController : MonoBehaviour
         m_ani.SetBool("IsGrounded", isGrounded);
     }
 
-    // 무기를 뽑는(발도) 애니메이션 트리거를 실행합니다.
-    public void PlayDrawSword()
+    // 무기를 뽑는 애니메이션 트리거를 실행합니다.
+    public void PlayDrawWeapon()
     {
-        if (m_ani != null) m_ani.SetTrigger("DrawSword");
+        if (m_ani != null) m_ani.SetTrigger("DrawWeapon");
     }
 
     // 공격 애니메이션 트리거를 실행합니다.
@@ -38,9 +38,9 @@ public class PlayerAniController : MonoBehaviour
     }
 
     // 무기를 집어넣는 애니메이션 트리거를 실행합니다.
-    public void PlayPutSword()
+    public void PlayPutWeapon()
     {
-        if (m_ani != null) m_ani.SetTrigger("PutSword");
+        if (m_ani != null) m_ani.SetTrigger("PutWeapon");
     }
 
     // 현재 전투 관련 액션 애니메이션(발도, 공격, 납도 등)이 재생 중인지 확인합니다.
@@ -50,11 +50,12 @@ public class PlayerAniController : MonoBehaviour
         {
             // 베이스 레이어(0번)의 현재 애니메이션 상태 정보를 가져옵니다.
             AnimatorStateInfo stateInfo = m_ani.GetCurrentAnimatorStateInfo(0);
+            Debug.Log(stateInfo);
 
             // 재생 중인 애니메이션 이름이 아래 세 가지 중 하나라도 포함되면 true를 반환합니다.
-            return stateInfo.IsName("Drawing Sword") ||
-                   stateInfo.IsName("Sword Slash") ||
-                   stateInfo.IsName("Putting Sword");
+            return stateInfo.IsName("Drawing Weapon") ||
+                   stateInfo.IsName("Attack Weapon") ||
+                   stateInfo.IsName("Putting Weapon");
         }
         return false;
     }

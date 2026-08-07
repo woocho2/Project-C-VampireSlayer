@@ -71,13 +71,18 @@ public class PlayerBattleController : MonoBehaviour
 
         // 중복 클릭을 막기 위해 버튼을 끄고 UI를 숨깁니다.
         DisableButtonsAndHideUI();
+
+        BattleCameraManager.Instance.ResetToMainView();
+
         StartCoroutine(AttackRoutine());
     }
 
     // 공격 연출과 데미지 판정 타이밍을 조절하는 코루틴
     private IEnumerator AttackRoutine()
     {
-        // 공격 애니메이션을 재생합니다.
+        yield return new WaitForSeconds(2f);
+
+        // 1. 공격 애니메이션을 재생합니다.
         if (aniController != null)
         {
             aniController.PlayAttack();
@@ -85,19 +90,28 @@ public class PlayerBattleController : MonoBehaviour
 
         Debug.Log($"{myUnit.unitName}이(가) {currentEnemy.unitName}을(를) 공격합니다!");
 
-        // 칼을 휘두르는 모션 타이밍에 맞춰 0.6초 대기합니다.
+        // 2. 칼을 휘두르는 타격 모션 타이밍에 맞춰 0.6초 대기합니다.
         yield return new WaitForSeconds(0.6f);
 
-        // 적에게 15의 데미지를 입힙니다.
+        // 3. 적 HP를 감소시킵니다.
         if (currentEnemy != null)
         {
             currentEnemy.TakeDamage(15);
         }
 
-        // 공격 후 잔여 모션 재생을 위해 1.0초 대기합니다.
+        // 4. 타격 이후 잔여 공격 모션이 자연스럽게 끝날 때까지 1.0초 대기합니다.
         yield return new WaitForSeconds(1.0f);
 
-        // 턴을 종료합니다.
+        // 5. 공격 모션이 끝나면 즉시 메인 카메라(Base Camera)로 복귀합니다.
+        if (BattleCameraManager.Instance != null)
+        {
+            BattleCameraManager.Instance.ResetToMainView();
+        }
+
+        // 6. Base 카메라로 전환된 상태에서 1초 동안 대기하며 전투 상황을 보여줍니다.
+        yield return new WaitForSeconds(1.0f);
+
+        // 7. 대기가 끝나면 턴을 종료하여 다음 캐릭터에게 턴을 넘깁니다.
         EndTurn();
     }
 
