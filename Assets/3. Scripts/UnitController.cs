@@ -8,6 +8,9 @@ public class UnitController : MonoBehaviour
     public int maxHP;       // 최대 체력
     public int currentHP;   // 현재 체력
 
+    [Header("위치 정보")]
+    public Vector3 originalPosition;
+
     // ==========================================
     // 턴 계산용 데이터 및 초상화
     // ==========================================
@@ -34,6 +37,7 @@ public class UnitController : MonoBehaviour
         unitName = data.monsterName;
         maxHP = data.maxHealth;
         currentHP = maxHP;
+        originalPosition = transform.position; // [추가] 자신의 스폰 위치 저장
 
         // SO(ScriptableObject) 데이터에서 초상화 이미지를 가져와 저장
         unitPortrait = data.monsterturnSprite;
@@ -55,6 +59,7 @@ public class UnitController : MonoBehaviour
         unitName = data.playerName;
         maxHP = data.maxHealth;
         currentHP = data.currentHealth;
+        originalPosition = transform.position; // [추가] 자신의 스폰 위치 저장
 
         // SO(ScriptableObject) 데이터에서 초상화 이미지를 가져와 저장
         unitPortrait = data.playerturnSprite;

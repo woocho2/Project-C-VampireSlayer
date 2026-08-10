@@ -42,6 +42,8 @@ public class EnemyBattleController : MonoBehaviour
             // 살아있는 플레이어 중 무작위로 한 명을 공격 대상(target)으로 선정
             UnitController target = alivePlayers[Random.Range(0, alivePlayers.Count)];
 
+            BattleManager.Instance.CurrentTarget = target;
+
             // 2. 0 또는 1 중 무작위로 숫자를 뽑아 공격 패턴 결정 (0 = 일반 공격, 1 = 스킬)
             int pattern = Random.Range(0, 2);
 

@@ -3,28 +3,50 @@ using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Timeline; // [추가] 타임라인 내부 트랙(Track) 정보에 접근하기 위해 필요합니다.
 
 // 전투의 전체적인 진행 상태를 나타내는 열거형(Enum) 정의
 public enum BattleState { Start, TurnProgress, Won, Lost }
 
 public class BattleManager : MonoBehaviour
 {
+    // 외부 스크립트(TimeLineController 등)에서 씬의 BattleManager에 쉽게 접근하도록 싱글톤화
+    public static BattleManager Instance { get; private set; }
+
     [Header("전투 상태 관리")]
-    public BattleState state; // 현재 진행 중인 전투 상태 (시작, 진행 중, 승리, 패배)
+    public BattleState state;
 
     [Header("스폰 위치 설정")]
-    public Transform[] playerStations; // 아군 캐릭터들이 소환되어 배치될 위치 배열
-    public Transform enemyStation;    // 적(몬스터)이 소환되어 배치될 위치
+    public Transform[] playerStations;
+    public Transform enemyStation;
 
     [Header("연출 설정")]
-    public PlayableDirector introDirector; // 전투 시작 시 인트로 타임라인 컷신을 재생할 컴포넌트
+    public PlayableDirector introDirector;
+    public PlayableDirector playerAttackDirector;
 
-    private List<UnitController> playerUnits = new List<UnitController>(); // 씬에 생성된 아군 유닛 컨트롤러들을 관리하는 리스트
-    private UnitController enemyUnitScript;                             // 씬에 생성된 적 유닛 컨트롤러 참조 변수
+    private List<UnitController> playerUnits = new List<UnitController>();
+    private UnitController enemyUnitScript;
+
+    // TimeLineController에서 내부 데이터를 읽어갈 수 있도록 프로퍼티 개방 (수정은 불가)
+    public List<UnitController> PlayerUnits => playerUnits;
+    public UnitController EnemyUnitScript => enemyUnitScript;
+
+    // =========================================================================
+    // [추가된 부분] 타임라인 시그널(TimeLineController)에서 참조할 현재 턴 정보
+    // 외부에서 읽고 쓸 수 있도록 자동 프로퍼티(get; set;)로 선언합니다.
+    // =========================================================================
+    public UnitController CurrentAttacker { get; set; }
+    public UnitController CurrentTarget { get; set; }
+
+    private void Awake()
+    {
+        // 씬 내에 단일 인스턴스로 존재하도록 설정
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
 
     private void Start()
     {
-        // 게임 시작 시 전투 상태를 'Start'로 변경하고 초기화 코루틴 실행
         state = BattleState.Start;
         StartCoroutine(SetupBattle());
     }
@@ -62,7 +84,7 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        // 아군이 한 명도 스폰되지 않았따면 전멸 상태이므로 패배 처리 후 종료
+        // 아군이 한 명도 스폰되지 않았다면 전멸 상태이므로 패배 처리 후 종료
         if (playerUnits.Count == 0)
         {
             state = BattleState.Lost;
@@ -84,10 +106,20 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        // 3. 전투 시작 알림 UI 연출 재생
-        if (BattleUIManager.Instance != null)
+        if (introDirector != null && enemyUnitScript != null)
         {
-            BattleUIManager.Instance.PlayBattleStartUI(m_eData.name);
+            Animator enemyAnim = enemyUnitScript.GetComponentInChildren<Animator>();
+
+            // 타임라인 내부에 있는 모든 출력 트랙을 순회하며 검사합니다.
+            foreach (var track in introDirector.playableAsset.outputs)
+            {
+                // 트랙 이름이 일치하는 곳에 몬스터의 애니메이터를 강제로 끼워 넣습니다.
+                if (track.streamName == "EnemyAnimTrack")
+                {
+                    introDirector.SetGenericBinding(track.sourceObject, enemyAnim);
+                    break;
+                }
+            }
         }
 
         // 4. 인트로 타임라인 연출 재생 및 완전 종료까지 대기
@@ -122,59 +154,6 @@ public class BattleManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 타임라인 신호(Signal): 적 몬스터가 0번 아군을 바라보도록 부드럽게 회전
-    /// </summary>
-    public void Signal_LookAtPlayer()
-    {
-        if (enemyUnitScript != null && playerUnits.Count > 0)
-        {
-            Transform targetPlayer = playerStations[1].transform;
-            StartCoroutine(SmoothLookAtRoutine(enemyUnitScript.transform, targetPlayer.position, 0.5f));
-        }
-        else
-        {
-            Debug.LogError("조건 실패: 몬스터나 파티원 데이터가 비어있습니다!");
-        }
-    }
-
-    /// <summary>
-    /// 지정한 시간(duration) 동안 몬스터의 회전각을 구면 선형 보간(Slerp)으로 부드럽게 돌리는 코루틴
-    /// </summary>
-    private IEnumerator SmoothLookAtRoutine(Transform enemyTransform, Vector3 targetPosition, float duration)
-    {
-        Quaternion startRotation = enemyTransform.rotation;
-        Vector3 directionToPlayer = (targetPosition - enemyTransform.position).normalized;
-        directionToPlayer.y = 0; // 수평 회전만 적용되도록 Y축 고정
-
-        if (directionToPlayer == Vector3.zero) yield break;
-
-        Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
-
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            enemyTransform.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
-            yield return null;
-        }
-
-        enemyTransform.rotation = targetRotation; // 최종 오차 보정
-    }
-
-    /// <summary>
-    /// 타임라인 신호(Signal): 살아있는 모든 아군 유닛에게 무기 뽑기(발도) 애니메이션 트리거 전달
-    /// </summary>
-    public void Signal_DrawSwords()
-    {
-        foreach (UnitController unit in playerUnits)
-        {
-            Animator playerAnim = unit.GetComponentInChildren<Animator>();
-            if (playerAnim != null) playerAnim.SetTrigger("DrawWeapon");
-        }
-    }
-
-    /// <summary>
     /// 전투가 끝날 때까지 턴을 계산하고 순차적으로 행동 권한을 넘겨주는 메인 턴제 루프 코루틴
     /// </summary>
     private IEnumerator TurnLoopRoutine()
@@ -191,9 +170,19 @@ public class BattleManager : MonoBehaviour
             UnitController nextTurnUnit = GetNextUnitAndAdvanceTime(aliveUnits);
             bool isTurnFinished = false; // 턴 행동 완료 콜백 플래그
 
+            // =========================================================================
+            // [추가된 부분] 턴을 넘겨받은 유닛을 현재 턴의 '공격자(Attacker)'로 등록합니다.
+            // =========================================================================
+            CurrentAttacker = nextTurnUnit;
+
             // 4. 다음 턴 유닛이 아군인 경우
             if (playerUnits.Contains(nextTurnUnit))
             {
+                // =========================================================================
+                // [추가된 부분] 아군 턴일 경우, 현재 씬의 유일한 적을 '타겟(Target)'으로 지정합니다.
+                // =========================================================================
+                CurrentTarget = enemyUnitScript;
+
                 PlayerBattleController pController = nextTurnUnit.GetComponent<PlayerBattleController>();
                 if (pController != null)
                 {
@@ -229,6 +218,9 @@ public class BattleManager : MonoBehaviour
             // 5. 다음 턴 유닛이 적 몬스터인 경우
             else
             {
+                // 참고: 적 몬스터의 타겟(CurrentTarget) 지정은 EnemyBattleController 내부에서
+                // 무작위로 아군을 선택할 때 BattleManager.Instance.CurrentTarget에 직접 덮어씌워야 합니다.
+
                 EnemyBattleController eController = nextTurnUnit.GetComponent<EnemyBattleController>();
                 if (eController != null)
                 {

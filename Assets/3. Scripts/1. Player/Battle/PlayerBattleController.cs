@@ -1,5 +1,6 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.Playables;
 
 // 플레이어의 전투 행동(공격, 스킬, 턴 관리 등)을 총괄하는 클래스입니다.
 [RequireComponent(typeof(UnitController))]
@@ -80,38 +81,40 @@ public class PlayerBattleController : MonoBehaviour
     // 공격 연출과 데미지 판정 타이밍을 조절하는 코루틴
     private IEnumerator AttackRoutine()
     {
-        yield return new WaitForSeconds(2f);
+        PlayableDirector attackTimeline = BattleManager.Instance.playerAttackDirector;
 
-        // 1. 공격 애니메이션을 재생합니다.
-        if (aniController != null)
+        if (attackTimeline != null && attackTimeline.playableAsset != null)
         {
-            aniController.PlayAttack();
+            Animator playerAnim = myUnit.GetComponentInChildren<Animator>();
+
+            foreach (var track in attackTimeline.playableAsset.outputs)
+            {
+                if (track.streamName == "PlayerAnimTrack")
+                {
+                    attackTimeline.SetGenericBinding(track.sourceObject, playerAnim);
+                    break;
+                }
+            }
+
+            attackTimeline.Play();
+
+            // 타임라인 연출이 완전히 끝날 때까지 대기
+            yield return new WaitUntil(() => attackTimeline.state != PlayState.Playing);
+        }
+        else
+        {
+            Debug.LogError("플레이어 공격 타임라인이 BattleManager에 연결되지 않았습니다.");
+            yield break; // 오타(yield.Break) 수정
         }
 
-        Debug.Log($"{myUnit.unitName}이(가) {currentEnemy.unitName}을(를) 공격합니다!");
-
-        // 2. 칼을 휘두르는 타격 모션 타이밍에 맞춰 0.6초 대기합니다.
-        yield return new WaitForSeconds(0.6f);
-
-        // 3. 적 HP를 감소시킵니다.
-        if (currentEnemy != null)
-        {
-            currentEnemy.TakeDamage(15);
-        }
-
-        // 4. 타격 이후 잔여 공격 모션이 자연스럽게 끝날 때까지 1.0초 대기합니다.
-        yield return new WaitForSeconds(1.0f);
-
-        // 5. 공격 모션이 끝나면 즉시 메인 카메라(Base Camera)로 복귀합니다.
+        // 데미지 처리는 애니메이션 이벤트가 알아서 처리하므로 여기서는 카메라 복귀와 턴 종료만 처리합니다.
         if (BattleCameraManager.Instance != null)
         {
             BattleCameraManager.Instance.ResetToMainView();
         }
 
-        // 6. Base 카메라로 전환된 상태에서 1초 동안 대기하며 전투 상황을 보여줍니다.
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(0.5f);
 
-        // 7. 대기가 끝나면 턴을 종료하여 다음 캐릭터에게 턴을 넘깁니다.
         EndTurn();
     }
 

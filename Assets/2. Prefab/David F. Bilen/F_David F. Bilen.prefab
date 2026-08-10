@@ -101,7 +101,6 @@ GameObject:
   - component: {fileID: 4050991313690293812}
   - component: {fileID: 4770626027303812339}
   - component: {fileID: 7598721556577602994}
-  - component: {fileID: 1252656129521006695}
   m_Layer: 0
   m_Name: Pirate_Sword_InHand
   m_TagString: Untagged
@@ -181,20 +180,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &1252656129521006695
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5080210612728960376}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 087d0c9c21a3fa14c84ab9a60e1acb9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SwordController
-  handSword: {fileID: 5080210612728960376}
-  scabbardSword: {fileID: 0}
 --- !u!1001 &5917428907738301173
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -273,7 +258,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 744efad9e489d224b82b509e316212d3, type: 2}
     - target: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       propertyPath: m_Name
-      value: Hero_Field
+      value: F_David F. Bilen
       objectReference: {fileID: 0}
     - target: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       propertyPath: m_TagString
@@ -307,19 +292,19 @@ PrefabInstance:
       addedObject: {fileID: -41661948236303059}
     - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 549573174537231838}
+    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 3630941324254234185}
     - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2278821394203964222}
     - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3933702662377738235}
-    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 772356457979748202}
-    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
-      insertIndex: -1
       addedObject: {fileID: -2941736888870559866}
+    - targetCorrespondingSourceObject: {fileID: 6821160843699083621, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3274692628430112334}
   m_SourcePrefab: {fileID: 100100000, guid: a162410f62f54e04d83736792b47cc0a, type: 3}
 --- !u!1 &916288567358151568 stripped
 GameObject:
@@ -431,6 +416,18 @@ MonoBehaviour:
   m_DefaultActionMap: 
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &549573174537231838
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916288567358151568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a64319aed277d14ca264bc209a875ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMoveController
 --- !u!114 &3630941324254234185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -440,7 +437,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 916288567358151568}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47841457c1ea3d44ba7ff2b251752ad6, type: 3}
+  m_Script: {fileID: 11500000, guid: bca0f62d68468b849872ce054bd839c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInputController
 --- !u!114 &2278821394203964222
@@ -455,19 +452,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa3facc9f890884e8fc0db334429f32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAniController
---- !u!114 &3933702662377738235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 916288567358151568}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce7ee36819c6a3d4dbd1b70497d0f0be, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMoveController
---- !u!114 &772356457979748202
+--- !u!114 &-2941736888870559866
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -478,8 +463,8 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9c531e67184eb7546ac9511a32d2c794, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatController
---- !u!114 &-2941736888870559866
+  m_EditorClassIdentifier: Assembly-CSharp::SwordController
+--- !u!114 &3274692628430112334
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -488,9 +473,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 916288567358151568}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 087d0c9c21a3fa14c84ab9a60e1acb9c, type: 3}
+  m_Script: {fileID: 11500000, guid: 536cbe76e6a3fd64a88e2b24fd4d87f6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SwordController
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponController
   handSword: {fileID: 5080210612728960376}
   scabbardSword: {fileID: 2565122159504955399}
 --- !u!4 &5501788729868904943 stripped

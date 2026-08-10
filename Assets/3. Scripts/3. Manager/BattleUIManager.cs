@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening; // DOTween 사용을 위한 네임스페이스 추가
 
 public class BattleUIManager : MonoBehaviour
 {
@@ -16,7 +17,6 @@ public class BattleUIManager : MonoBehaviour
 
     [Header("연출 설정")]
     public float blinkSpeed = 5f; // 텍스트가 깜빡이는 속도
-    public float panelDisplayTime = 3f; // 전투 시작 패널이 유지되는 시간
 
     [Header("전투 정보 패널 UI")]
     [SerializeField] GameObject battleInfoPanel; // 플레이어의 행동 선택 UI 패널
@@ -79,31 +79,107 @@ public class BattleUIManager : MonoBehaviour
 
         for (int i = 0; i < 5; i++)
         {
-            // 부모 아래에 프리팹을 1개 생성합니다.
             GameObject slotGO = Instantiate(turnSlotPrefab, turnSlotParent);
-
-            // 마스크가 있는 프리팹의 경우 최상단은 Mask(Image)이고, 자식이 실제 사진(Image)임
-            // slotGO.transform.GetChild(0)을 사용하여 자식 오브젝트의 Image 컴포넌트를 가져옴
             Image portraitImage = slotGO.transform.GetChild(0).GetComponent<Image>();
 
             if (portraitImage != null)
             {
                 spawnedPortraitSlots.Add(portraitImage);
-                slotGO.SetActive(false); // 처음에는 안 보이게 꺼둡니다.
-            }
-            else
-            {
-                Debug.LogError("프리팹의 첫 번째 자식 오브젝트에 Image 컴포넌트가 없습니다!");
+                slotGO.SetActive(false);
             }
         }
     }
 
-    // 전투 시작 시 패널을 켜고 몬스터 이름을 세팅한 뒤 연출 코루틴을 실행하는 함수
+    /// <summary>
+    /// [수정됨] 타임라인 시그널에서 호출되어 패널을 켜고 DOTween 깜빡임을 시작하는 함수
+    /// </summary>
     public void PlayBattleStartUI(string enemyName)
     {
         battleStartPanel.SetActive(true);
-        monsterNameText.text = enemyName;
-        StartCoroutine(BattleStartSequence());
+
+        monsterNameText.gameObject.SetActive(false);
+
+        // 깜빡임 1회에 걸리는 시간 계산 (기존 blinkSpeed와 유사한 느낌 도출)
+        float duration = 1f / blinkSpeed;
+
+        // 경고 텍스트들을 DOTween을 이용해 무한히 깜빡이게(Yoyo) 만듭니다.
+        foreach (var text in warningTexts)
+        {
+            if (text != null)
+            {
+                // 이전 트윈이 남아있다면 끄고, 알파값을 0에서 1로 왕복하는 애니메이션 실행
+                text.DOKill();
+                text.DOFade(0f, duration).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+            }
+        }
+    }
+
+    /// <summary>
+    /// [추가됨] 타임라인 종료 시그널에서 호출되어 깜빡임을 멈추고 패널을 끄는 함수
+    /// </summary>
+    public void HideBattleStartUI()
+    {
+        // 텍스트에 적용되어 무한 반복 중이던 DOTween 애니메이션을 강제로 제거합니다.
+        foreach (var text in warningTexts)
+        {
+            if (text != null) text.DOKill();
+        }
+
+        if (monsterNameText != null) monsterNameText.DOKill();
+
+        // UI 패널을 화면에서 숨깁니다.
+        battleStartPanel.SetActive(false);
+    }
+
+    public void MonsterNameEffect()
+    {
+        if (BattleManager.Instance != null && BattleManager.Instance.EnemyUnitScript != null)
+        {
+            string enemyName = BattleManager.Instance.EnemyUnitScript.unitName;
+
+            if (monsterNameText != null)
+            {
+                monsterNameText.gameObject.SetActive(true);
+
+                monsterNameText.text = enemyName;
+
+                // 1. 기존 트윈 애니메이션 초기화
+                monsterNameText.DOKill();
+
+                // 글자 하나씩 타이핑되면서 박히는 연출 코루틴 실행
+                StopAllCoroutines();
+                StartCoroutine(TypeTextPunchRoutine(enemyName));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 텍스트가 한 글자씩 나타나며 타격감을 주는 코루틴
+    /// </summary>
+    private IEnumerator TypeTextPunchRoutine(string textToPrint)
+    {
+        monsterNameText.text = textToPrint;
+        monsterNameText.maxVisibleCharacters = 0; // 처음에 글자를 숨김
+
+        int totalCharacters = textToPrint.Length;
+
+        for (int i = 0; i <= totalCharacters; i++)
+        {
+            monsterNameText.maxVisibleCharacters = i; // 글자를 하나씩 늘려감
+
+            if (i > 0)
+            {
+                // 글자가 한 글자씩 찍힐 때마다 쾅! 커졌다가 돌아오는 스케일 연출
+                monsterNameText.transform.localScale = Vector3.one * 2.0f;
+                monsterNameText.transform.DOScale(Vector3.one, 0.15f).SetEase(Ease.OutBack);
+
+                // 미세한 흔들림 
+                monsterNameText.transform.DOShakePosition(0.15f, 5f, 15, 90f);
+            }
+
+            // 글자가 나타나는 간격 (속도 조절 가능)
+            yield return new WaitForSeconds(0.08f);
+        }
     }
 
     // 플레이어 행동 UI(공격/스킬 버튼 등)를 켜거나 끌 때 호출하는 함수
@@ -123,14 +199,12 @@ public class BattleUIManager : MonoBehaviour
         float targetAlpha = isOpen ? 1f : 0f;
         float elapsed = 0f;
 
-        // 열릴 때는 상호작용 가능하게 변경
         if (isOpen)
         {
             battleInfoCanvasGroup.interactable = true;
             battleInfoCanvasGroup.blocksRaycasts = true;
         }
 
-        // 지정된 시간 동안 알파값 선형 보간
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
@@ -140,46 +214,11 @@ public class BattleUIManager : MonoBehaviour
 
         battleInfoCanvasGroup.alpha = targetAlpha;
 
-        // 닫힐 때는 상호작용 차단
         if (!isOpen)
         {
             battleInfoCanvasGroup.interactable = false;
             battleInfoCanvasGroup.blocksRaycasts = false;
         }
-    }
-
-    // 전투 시작 패널의 텍스트들을 깜빡거리게 만들고 시간이 지나면 꺼주는 코루틴
-    private IEnumerator BattleStartSequence()
-    {
-        float timer = 0f;
-
-        while (timer < panelDisplayTime)
-        {
-            timer += Time.deltaTime;
-            // Mathf.PingPong을 이용해 알파값이 0과 1 사이를 왕복하도록 계산 (깜빡임 효과)
-            float alphaValue = Mathf.PingPong(Time.time * blinkSpeed, 1f);
-
-            foreach (var text in warningTexts)
-            {
-                if (text != null)
-                {
-                    Color c = text.color;
-                    c.a = alphaValue;
-                    text.color = c;
-                }
-            }
-
-            if (monsterNameText != null)
-            {
-                Color c = monsterNameText.color;
-                c.a = alphaValue;
-                monsterNameText.color = c;
-            }
-
-            yield return null;
-        }
-
-        battleStartPanel.SetActive(false); // 시간이 다 되면 패널 끔
     }
 
     /// <summary>
@@ -191,23 +230,17 @@ public class BattleUIManager : MonoBehaviour
 
         for (int i = 0; i < spawnedPortraitSlots.Count; i++)
         {
-            // 가져온 턴 데이터 개수만큼 슬롯을 채움
             if (i < turnSprites.Count && turnSprites[i] != null)
             {
-                // 생성된 프리팹 전체(부모)를 활성화합니다.
                 spawnedPortraitSlots[i].transform.parent.gameObject.SetActive(true);
-
-                // 스프라이트 사진을 덮어씌웁니다.
                 spawnedPortraitSlots[i].sprite = turnSprites[i];
 
-                // 미리 고정해둔 배열에서 알파값을 가져와 적용합니다. (순서에 따라 투명도 조절)
                 Color slotColor = spawnedPortraitSlots[i].color;
                 slotColor.a = alphaLevels[i];
                 spawnedPortraitSlots[i].color = slotColor;
             }
             else
             {
-                // 데이터가 비어있다면 프리팹(부모) 전체를 화면에서 숨깁니다.
                 spawnedPortraitSlots[i].transform.parent.gameObject.SetActive(false);
             }
         }
