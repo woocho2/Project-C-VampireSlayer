@@ -132,7 +132,9 @@ public class PlayerBattleController : MonoBehaviour
 
         // 중복 클릭을 막기 위해 버튼을 끄고 UI를 숨깁니다.
         DisableButtonsAndHideUI();
-        currentEnemy.TakeDamage(30);
+
+        int skillDamage = Mathf.RoundToInt(myUnit.power * 2.0f);
+        currentEnemy.TakeDamage(skillDamage);
 
         // 턴을 종료합니다.
         EndTurn();

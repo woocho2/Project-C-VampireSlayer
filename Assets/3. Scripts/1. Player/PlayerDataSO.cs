@@ -13,7 +13,10 @@ public class PlayerDataSO : ScriptableObject
     [Header("전투 스탯")]
     public int maxHealth = 100;                         // 최대 체력
     public int currentHealth = 100;                     // 현재 체력
-    public int baseDamage = 15;                         // 기본 공격력
+    public int maxAP = 5;
+    public int currentAP = 2;
+    public int power = 15;                         // 기본 공격력
+    public int defense = 50;
     public int baseSpeed = 5;                           // 기본 속도 스탯
 
     [Header("필드 이동 및 회전 수치")]

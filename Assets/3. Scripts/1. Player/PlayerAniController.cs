@@ -8,8 +8,18 @@ public class PlayerAniController : MonoBehaviour
 
     private void Awake()
     {
-        // 자식 오브젝트에 있는 Animator 컴포넌트를 찾아 자동으로 연결합니다.
+        BindAnimator(); // 시작할 때 초기 1회 바인딩
+    }
+
+    public void BindAnimator()
+    {
+        // 켜져 있는 자식 오브젝트 중 Animator를 다시 찾아서 덮어씌웁니다.
         m_ani = GetComponentInChildren<Animator>();
+
+        if (m_ani == null)
+        {
+            Debug.LogWarning("활성화된 하위 프리팹에서 Animator를 찾을 수 없습니다.");
+        }
     }
 
     // 이동 속도와 지상 체류 여부를 받아 애니메이터 파라미터에 전달합니다.
@@ -50,7 +60,6 @@ public class PlayerAniController : MonoBehaviour
         {
             // 베이스 레이어(0번)의 현재 애니메이션 상태 정보를 가져옵니다.
             AnimatorStateInfo stateInfo = m_ani.GetCurrentAnimatorStateInfo(0);
-            Debug.Log(stateInfo);
 
             // 재생 중인 애니메이션 이름이 아래 세 가지 중 하나라도 포함되면 true를 반환합니다.
             return stateInfo.IsName("Drawing Weapon") ||

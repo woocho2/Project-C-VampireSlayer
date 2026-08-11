@@ -2,8 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
-[RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(PlayerAniController))]
 [RequireComponent(typeof(PlayerInputController))]
@@ -167,6 +165,27 @@ public class PlayerMoveController : MonoBehaviour
             moveDirection.y = 0f;
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, m_pData.rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    // 플레이어의 CharacterController가 다른 콜라이더(몬스터 등)와 부딪혔을 때 호출됩니다.
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        // 부딪힌 대상이 "Enemy" 태그를 가지고 있는지 확인합니다. 
+        // (몬스터 프리팹의 태그를 "Enemy"로 설정해야 합니다.)
+        if (hit.gameObject.CompareTag("Enemy"))
+        {
+            // 부딪힌 몬스터 오브젝트에서 EnemyController 스크립트를 가져와 데이터를 빼냅니다.
+            EnemyController enemy = hit.gameObject.GetComponent<EnemyController>();
+
+            if (enemy != null && enemy.m_eData != null)
+            {
+                if (GameManager.Instance != null)
+                {
+                    // 플레이어 쪽에서 주도적으로 게임 매니저에 전투 씬 진입을 요청합니다.
+                    GameManager.Instance.StartBattleTransition(enemy.m_eData);
+                }
+            }
         }
     }
 }

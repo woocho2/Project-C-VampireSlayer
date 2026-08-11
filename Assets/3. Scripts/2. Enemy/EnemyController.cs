@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.AI;
 
 // 몬스터 오브젝트에 반드시 필요한 컴포넌트들이 자동으로 추가되도록 강제합니다.
-[RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(NavMeshAgent))]
 public class EnemyController : MonoBehaviour
@@ -176,28 +175,5 @@ public class EnemyController : MonoBehaviour
         {
             m_ani.SetFloat("MoveSpeed", currentSpeed);
         }
-    }
-
-    // 플레이어와 충돌(부딪힘)했을 때 전투 화면으로 전환하기 위한 함수
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            if (GameManager.Instance != null)
-            {
-                if (m_eData != null)
-                {
-                    GameManager.Instance.StartBattleTransition(m_eData); // 게임 매니저에 전투 시작 요청
-                }
-                else
-                {
-                    Debug.LogError("EnemyController에 EnemyDataSO가 할당되지 않았습니다.");
-                }
-            }
-            else
-            {
-                Debug.LogError("씬에 GameManager가 존재하지 않습니다.");
-            }
-        }
-    }
+    }   
 }

@@ -1,7 +1,6 @@
 using UnityEngine;
 
 // 이 스크립트가 정상적으로 작동하기 위해 캐릭터 오브젝트에 반드시 필요한 컴포넌트들을 강제로 지정합니다.
-[RequireComponent(typeof(WeaponController))]
 [RequireComponent(typeof(PlayerAniController))]
 [RequireComponent(typeof(PlayerInputController))]
 [RequireComponent(typeof(CharacterController))]

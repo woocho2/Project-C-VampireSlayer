@@ -50,17 +50,20 @@ public class EnemyBattleController : MonoBehaviour
             // 행동 전 카메라 이동이나 연출을 보여주기 위해 1초 동안 대기
             yield return new WaitForSeconds(1f);
 
-            // 결정된 패턴이 0(일반 공격)일 때
+            // [수정] 결정된 패턴이 0(일반 공격)일 때 (하드코딩 제거)
             if (pattern == 0)
             {
                 Debug.Log($"{myUnit.unitName}이(가) {target.unitName}에게 일반 공격!");
-                target.TakeDamage(10); // 타겟에게 10의 데미지 입힘 (임시 수치)
+                // 내 유닛의 power 수치만큼 정직하게 데미지를 입힙니다[cite: 21].
+                target.TakeDamage(myUnit.power);
             }
-            // 결정된 패턴이 1(스킬 공격)일 때
+            // [수정] 결정된 패턴이 1(스킬 공격)일 때 (하드코딩 제거)
             else
             {
                 Debug.Log($"{myUnit.unitName}이(가) {target.unitName}에게 강력한 스킬 공격!");
-                target.TakeDamage(20); // 타겟에게 20의 데미지 입힘 (임시 수치)
+                // 스킬이므로 power의 1.5배 등에 해당하는 데미지를 입히도록 계산합니다[cite: 21].
+                int skillDamage = Mathf.RoundToInt(myUnit.power * 1.5f);
+                target.TakeDamage(skillDamage);
             }
 
             // 공격 및 타격 연출(애니메이션 등)이 끝날 때까지 1.5초 동안 대기

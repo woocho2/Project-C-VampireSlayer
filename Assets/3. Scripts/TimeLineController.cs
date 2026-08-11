@@ -40,20 +40,7 @@ public class TimeLineController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 타임라인 신호(Signal): 살아있는 모든 아군 유닛에게 무기 뽑기(발도) 애니메이션 트리거 전달
-    /// </summary>
-    public void Signal_DrawWeapon()
-    {
-        // BattleManager에서 생성된 아군 유닛 리스트를 가져옵니다.
-        List<UnitController> players = BattleManager.Instance.PlayerUnits;
-
-        foreach (UnitController unit in players)
-        {
-            Animator playerAnim = unit.GetComponentInChildren<Animator>();
-            if (playerAnim != null) playerAnim.SetTrigger("DrawWeapon");
-        }
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /// <summary>
     /// 타임라인 신호: 타겟의 바로 앞까지 대쉬하여 이동합니다.
@@ -72,7 +59,7 @@ public class TimeLineController : MonoBehaviour
             Vector3 destination = target.transform.position + (direction * 1.5f);
 
             // DOTween을 사용하여 0.2초 동안 타겟 앞까지 매우 빠르게 이동시킵니다.
-            attacker.transform.DOMove(destination, 0.2f).SetEase(Ease.OutExpo);
+            attacker.transform.DOMove(destination, 0.5f).SetEase(Ease.OutExpo);
         }
     }
 
@@ -86,24 +73,104 @@ public class TimeLineController : MonoBehaviour
         if (attacker != null)
         {
             // UnitController에 저장해둔 원래 자리로 0.3초 동안 부드럽게 복귀합니다.
-            attacker.transform.DOMove(attacker.originalPosition, 0.3f).SetEase(Ease.OutQuad);
+            attacker.transform.DOMove(attacker.originalPosition, 0.5f).SetEase(Ease.OutQuad);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /// <summary>
+    /// 타임라인 신호(Signal): 살아있는 모든 아군 유닛에게 무기 뽑기(발도) 애니메이션 트리거 전달
+    /// </summary>
+    public void Signal_DrawWeapon()
+    {
+        // BattleManager에서 생성된 아군 유닛 리스트를 가져옵니다.
+        List<UnitController> players = BattleManager.Instance.PlayerUnits;
+
+        foreach (UnitController unit in players)
+        {
+            Animator playerAnim = unit.GetComponentInChildren<Animator>();
+            if (playerAnim != null) playerAnim.SetTrigger("DrawWeapon");
         }
     }
 
     /// <summary>
-    /// 애니메이션 이벤트 또는 타임라인 시그널에서 호출하여 적에게 데미지를 입히는 함수
+    /// 타임라인 신호(Signal): 살아있는 모든 아군 유닛에게 무기 뽑기(발도) 애니메이션 트리거 전달
     /// </summary>
-    public void AnimationEvent_ApplyDamage()
+    public void Signal_DoAttack()
     {
-        UnitController target = BattleManager.Instance.CurrentTarget;
+        // BattleManager에서 생성된 아군 유닛 리스트를 가져옵니다.
+        UnitController attacker = BattleManager.Instance.CurrentAttacker;
 
-        if (target != null)
+        if (attacker != null)
         {
-            target.TakeDamage(15); // 원하는 데미지 값 입력
+            Animator playerAnim = attacker.GetComponentInChildren<Animator>();
+            if (playerAnim != null)
+            {
+                playerAnim.SetTrigger("DoAttack"); 
+            }
         }
         else
         {
-            Debug.LogError("데미지를 줄 타겟(적)이 존재하지 않습니다!");
+            Debug.LogError("현재 공격자 (CurrentAttacker) 데이터가 지정되지 않았습니다.");
+        }
+    }
+
+    public void Signal_DoSkill1()
+    {
+        // BattleManager에서 생성된 아군 유닛 리스트를 가져옵니다.
+        UnitController attacker = BattleManager.Instance.CurrentAttacker;
+
+        if (attacker != null)
+        {
+            Animator playerAnim = attacker.GetComponentInChildren<Animator>();
+            if (playerAnim != null)
+            {
+                playerAnim.SetTrigger("DoSkill1");
+            }
+        }
+        else
+        {
+            Debug.LogError("현재 공격자 (CurrentAttacker) 데이터가 지정되지 않았습니다.");
+        }
+    }
+
+    public void Signal_DoSkill2()
+    {
+        // BattleManager에서 생성된 아군 유닛 리스트를 가져옵니다.
+        UnitController attacker = BattleManager.Instance.CurrentAttacker;
+
+        if (attacker != null)
+        {
+            Animator playerAnim = attacker.GetComponentInChildren<Animator>();
+            if (playerAnim != null)
+            {
+                playerAnim.SetTrigger("DoSkill2");
+            }
+        }
+        else
+        {
+            Debug.LogError("현재 공격자 (CurrentAttacker) 데이터가 지정되지 않았습니다.");
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /// <summary>
+    /// 스킬 타격 프레임에서 호출될 시그널 함수
+    /// </summary>
+    public void Signal_ApplyDamage(float skillMultiplier)
+    {
+        UnitController attacker = BattleManager.Instance.CurrentAttacker;
+        UnitController target = BattleManager.Instance.CurrentTarget;
+
+        if (attacker != null && target != null)
+        {
+            // 공격자의 공격력 * 스킬 계수로 원본 데미지(Raw Damage) 계산
+            int rawDamage = Mathf.RoundToInt(attacker.power * skillMultiplier);
+
+            // 타겟에게 데미지 전달 (방어력 상쇄 처리는 Target의 TakeDamage 내부에서 알아서 수행됨)
+            target.TakeDamage(rawDamage);
         }
     }
 }
