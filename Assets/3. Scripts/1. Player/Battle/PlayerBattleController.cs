@@ -2,157 +2,148 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
 
-// 플레이어의 전투 행동(공격, 스킬, 턴 관리 등)을 총괄하는 클래스입니다.
 [RequireComponent(typeof(UnitController))]
 public class PlayerBattleController : MonoBehaviour
 {
-    private UnitController myUnit;                  // 내 유닛 정보
-    private UnitController currentEnemy;            // 현재 상대하는 적 유닛
-    private System.Action turnFinishedCallback;     // 턴 종료를 매니저에게 알리기 위한 콜백 함수
-    private PlayerAniController aniController;      // 플레이어 애니메이션 컨트롤러
+    private UnitController m_unitPlayer;
+    private UnitController m_unitEnemy;
+    private System.Action turnFinishedCallback;
+    private PlayerAniController m_aniController;
+    private Animator m_ani;
 
+    // ==========================================
+    // [1] 유니티 생명주기 (초기화)
+    // ==========================================
     private void Awake()
     {
-        // 컴포넌트들을 미리 찾아 변수에 담아둡니다.
-        myUnit = GetComponent<UnitController>();
-        aniController = GetComponent<PlayerAniController>();
+        m_unitPlayer = GetComponent<UnitController>();
+        m_aniController = GetComponent<PlayerAniController>();
     }
 
-    private void Start()
-    {
-        // 게임이 시작될 때 아군 턴이 아니므로 공격/스킬 버튼을 비활성화해 오작동을 방지합니다.
-        if (BattleUIManager.Instance != null)
-        {
-            if (BattleUIManager.Instance.btn_attack != null) BattleUIManager.Instance.btn_attack.interactable = false;
-            if (BattleUIManager.Instance.btn_skill != null) BattleUIManager.Instance.btn_skill.interactable = false;
-        }
-    }
+    // ==========================================
+    // [2] 턴 루프 (실행 흐름)
+    // ==========================================
 
     /// <summary>
-    /// BattleManager가 아군의 턴일 때 호출하는 함수입니다.
+    /// 1. 턴 시작: BattleManager에 의해 호출되며, 버튼 상호작용을 켜고 UI를 노출합니다.
     /// </summary>
     public void StartTurn(UnitController enemy, System.Action onTurnFinished)
     {
-        currentEnemy = enemy;                 // 대상 적 설정
-        turnFinishedCallback = onTurnFinished; // 턴 종료 콜백 저장
+        m_unitEnemy = enemy;
+        turnFinishedCallback = onTurnFinished;
 
-        Debug.Log($"{myUnit.unitName}의 턴! 명령을 대기합니다. (적 대상: {enemy.unitName})");
-
-        // 턴이 시작되면 UI 버튼에 내 명령 함수들을 동적으로 연결하고 활성화합니다.
         if (BattleUIManager.Instance != null)
         {
-            if (BattleUIManager.Instance.btn_attack != null)
-            {
-                BattleUIManager.Instance.btn_attack.onClick.RemoveAllListeners();
-                BattleUIManager.Instance.btn_attack.onClick.AddListener(OnAttackCommand);
-                BattleUIManager.Instance.btn_attack.interactable = true;
-            }
-
-            if (BattleUIManager.Instance.btn_skill != null)
-            {
-                BattleUIManager.Instance.btn_skill.onClick.RemoveAllListeners();
-                BattleUIManager.Instance.btn_skill.onClick.AddListener(OnSkillCommand);
-                BattleUIManager.Instance.btn_skill.interactable = true;
-            }
-
-            // 행동 UI를 서서히 화면에 띄웁니다.
+            BattleUIManager.Instance.btn_attack.interactable = true;
+            BattleUIManager.Instance.btn_skill.interactable = true;
             BattleUIManager.Instance.ShowPlayerActionUI(true);
         }
     }
 
-    // 공격 버튼을 눌렀을 때 실행되는 함수
+    /// <summary>
+    /// 2-A. 공격 명령: UI 버튼 클릭 시 호출됩니다.
+    /// </summary>
     public void OnAttackCommand()
     {
-        // 적이나 콜백 데이터가 유효한지 검사합니다.
-        if (currentEnemy == null || turnFinishedCallback == null)
+        if (m_unitEnemy == null || turnFinishedCallback == null)
         {
-            Debug.LogError($"턴 데이터 누락 오류! currentEnemy: {currentEnemy}, turnFinishedCallback: {turnFinishedCallback}");
+            EndTurn();
             return;
         }
 
-        // 중복 클릭을 막기 위해 버튼을 끄고 UI를 숨깁니다.
         DisableButtonsAndHideUI();
-
         BattleCameraManager.Instance.ResetToMainView();
-
         StartCoroutine(AttackRoutine());
     }
 
-    // 공격 연출과 데미지 판정 타이밍을 조절하는 코루틴
+    /// <summary>
+    /// 2-B. 스킬 명령: UI 버튼 클릭 시 호출됩니다.
+    /// </summary>
+    public void OnSkillCommand()
+    {
+        if (m_unitEnemy == null || turnFinishedCallback == null)
+        {
+            EndTurn();
+            return;
+        }
+
+        DisableButtonsAndHideUI();
+        BattleCameraManager.Instance.ResetToMainView();
+        int skillDamage = Mathf.RoundToInt(m_unitPlayer.power * 2.0f);
+        m_unitEnemy.TakeDamage(skillDamage);
+
+        EndTurn(); // 스킬은 즉발이므로 바로 턴을 종료합니다.
+    }
+
+    // ==========================================
+    // [3] 연출 코루틴 및 종속(Helper) 함수
+    // ==========================================
+
+    /// <summary>
+    /// 공격 타임라인 연출을 관리하는 코루틴 (OnAttackCommand와 세트)
+    /// </summary>
     private IEnumerator AttackRoutine()
     {
         PlayableDirector attackTimeline = BattleManager.Instance.playerAttackDirector;
 
         if (attackTimeline != null && attackTimeline.playableAsset != null)
         {
-            Animator playerAnim = myUnit.GetComponentInChildren<Animator>();
+            Animator anim = GetAnimator();
 
             foreach (var track in attackTimeline.playableAsset.outputs)
             {
                 if (track.streamName == "PlayerAnimTrack")
                 {
-                    attackTimeline.SetGenericBinding(track.sourceObject, playerAnim);
+                    attackTimeline.SetGenericBinding(track.sourceObject, anim);
                     break;
                 }
             }
 
             attackTimeline.Play();
-
-            // 타임라인 연출이 완전히 끝날 때까지 대기
+            yield return null; // 1프레임 대기 (타임라인 재생 버그 방지)
             yield return new WaitUntil(() => attackTimeline.state != PlayState.Playing);
         }
         else
         {
-            Debug.LogError("플레이어 공격 타임라인이 BattleManager에 연결되지 않았습니다.");
-            yield break; // 오타(yield.Break) 수정
+            Debug.LogError("플레이어 공격 타임라인이 연결되지 않았습니다.");
+            EndTurn();
+            yield break;
         }
 
-        // 데미지 처리는 애니메이션 이벤트가 알아서 처리하므로 여기서는 카메라 복귀와 턴 종료만 처리합니다.
-        if (BattleCameraManager.Instance != null)
-        {
-            BattleCameraManager.Instance.ResetToMainView();
-        }
-
+        BattleCameraManager.Instance?.ResetToMainView();
         yield return new WaitForSeconds(0.5f);
 
-        EndTurn();
+        EndTurn(); // 연출이 모두 끝나면 턴을 종료합니다.
     }
 
-    // 스킬 버튼을 눌렀을 때 실행되는 함수
-    public void OnSkillCommand()
+    /// <summary>
+    /// 프리팹이 교체되어도 안전하게 호출할 수 있는 애니메이터 확인 함수 (AttackRoutine과 세트)
+    /// </summary>
+    private Animator GetAnimator()
     {
-        // 적이나 콜백 데이터가 유효한지 검사합니다.
-        if (currentEnemy == null || turnFinishedCallback == null)
+        if (m_ani == null)
         {
-            Debug.LogError($"턴 데이터 누락 오류! currentEnemy: {currentEnemy}, turnFinishedCallback: {turnFinishedCallback}");
-            return;
+            m_ani = m_unitPlayer.GetComponentInChildren<Animator>();
         }
-
-        Debug.Log($"{myUnit.unitName}이(가) 스킬을 사용합니다!");
-
-        // 중복 클릭을 막기 위해 버튼을 끄고 UI를 숨깁니다.
-        DisableButtonsAndHideUI();
-
-        int skillDamage = Mathf.RoundToInt(myUnit.power * 2.0f);
-        currentEnemy.TakeDamage(skillDamage);
-
-        // 턴을 종료합니다.
-        EndTurn();
+        return m_ani;
     }
 
-    // 버튼 상호작용을 차단하고 액션 UI를 숨기는 내부 편의 함수
+    /// <summary>
+    /// 행동을 시작할 때 입력을 막기 위해 UI를 숨기는 보조 함수
+    /// </summary>
     private void DisableButtonsAndHideUI()
     {
         if (BattleUIManager.Instance != null)
         {
-            if (BattleUIManager.Instance.btn_attack != null) BattleUIManager.Instance.btn_attack.interactable = false;
-            if (BattleUIManager.Instance.btn_skill != null) BattleUIManager.Instance.btn_skill.interactable = false;
-
+            BattleUIManager.Instance.btn_attack.interactable = false;
+            BattleUIManager.Instance.btn_skill.interactable = false;
             BattleUIManager.Instance.ShowPlayerActionUI(false);
         }
     }
 
-    // 턴 종료를 매니저에게 알리는 함수
+    /// <summary>
+    /// 3. 턴 종료: 모든 행동과 연출이 끝난 후 BattleManager로 권한을 넘깁니다.
+    /// </summary>
     private void EndTurn()
     {
         turnFinishedCallback?.Invoke();

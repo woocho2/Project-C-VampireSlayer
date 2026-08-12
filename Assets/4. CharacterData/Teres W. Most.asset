@@ -13,17 +13,20 @@ MonoBehaviour:
   m_Name: Teres W. Most
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
   playerName: Teres W. Most
-  playerPrefab: {fileID: 6897806069931835909, guid: f15fbb5121566f140adae490aac89e6f, type: 3}
-  fieldPlayerPrefab: {fileID: 3719727434306024922, guid: 6211f64209b6a33469dd012f60a740d2, type: 3}
+  playerPrefab: {fileID: 108838498569391885, guid: 219fde7b9e3661541ae1861988f9ffa8, type: 3}
+  fieldPlayerPrefab: {fileID: 108838498569391885, guid: 8e7eb62bac6d76645bfe7aa22025db05, type: 3}
   playerturnSprite: {fileID: 21300000, guid: 55495fa9a9bf8374c989e41acbeb31e1, type: 3}
   maxHealth: 100
   currentHealth: 100
-  baseDamage: 15
-  baseSpeed: 10
+  maxAP: 5
+  currentAP: 2
+  power: 15
+  defense: 5
+  baseSpeed: 220
   walkSpeed: 4
   runSpeed: 10
-  jumpHeight: 2
-  gravity: -19.62
+  jumpHeight: 1.5
+  gravity: -25
   rotationSpeed: 15
   acceleration: 15
   deceleration: 10

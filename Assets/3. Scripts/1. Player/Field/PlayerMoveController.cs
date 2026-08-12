@@ -47,6 +47,24 @@ public class PlayerMoveController : MonoBehaviour
         if (m_pData == null)
         {
             Debug.LogError("PlayerMoveController에 올바른 데이터가 주입되지 않았습니다.");
+            return;
+        }
+
+        if (m_characterController != null)
+        {
+            // 컴포넌트가 활성화된 직후, 바닥을 향해 아주 미세한 힘(Vector3.down * 0.1f)으로 강제 이동을 1회 실행합니다.
+            // 이 처리를 통해 CharacterController의 내부 물리 연산이 즉시 갱신됩니다.
+            m_characterController.Move(Vector3.down * 0.1f);
+
+            // Move() 실행 직후 바닥 판정이 제대로 되었는지 확인하여 isGrounded 변수를 즉시 최신화합니다.
+            // 이렇게 하면 Update()의 첫 프레임이 시작될 때 이미 바닥에 서 있는 것으로 완벽히 인식하게 됩니다.
+            isGrounded = m_characterController.isGrounded;
+
+            // 애니메이터에도 곧바로 바닥 상태를 전달하여 엉뚱한 점프 모션이 예약되는 것을 차단합니다.
+            if (m_aniController != null)
+            {
+                m_aniController.UpdateMovementAnimation(0f, isGrounded);
+            }
         }
     }
 

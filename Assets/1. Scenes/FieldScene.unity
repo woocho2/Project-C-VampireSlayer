@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: c82a334cf5a5e47978749c210cee72a7, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -353,8 +353,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.07213676, y: 0.04743864, z: -0.0034349156, w: 0.99626005}
-  m_LocalPosition: {x: 1.6884073, y: 2.0440042, z: 42.760555}
+  m_LocalRotation: {x: 0.18012992, y: -0.04869576, z: 0.008928742, w: 0.9823962}
+  m_LocalPosition: {x: 1.8878601, y: 2.3, z: 43.60438}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -421,7 +421,7 @@ MonoBehaviour:
   IgnoreTimeScale: 0
   WorldUpOverride: {fileID: 0}
   ChannelMask: -1
-  UpdateMethod: 2
+  UpdateMethod: 1
   BlendUpdateMethod: 1
   LensModeOverride:
     Enabled: 0
@@ -623,6 +623,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3344929827172588938, guid: bef75387267f4ac4fa6517f6eeac73fb, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4675176445716181232, guid: bef75387267f4ac4fa6517f6eeac73fb, type: 3}
+      propertyPath: m_CullingMode
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -1314,8 +1318,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 867700054}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.07213675, y: 0.04743863, z: -0.0034349149, w: 0.99626005}
-  m_LocalPosition: {x: 1.8878601, y: 2.3, z: 41.10438}
+  m_LocalRotation: {x: 0.18012989, y: -0.048695758, z: 0.0089287395, w: 0.9823962}
+  m_LocalPosition: {x: 1.8878601, y: 2.3, z: 43.60438}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1434,7 +1438,7 @@ MonoBehaviour:
   TargetOffset: {x: 0.7, y: 1, z: 0}
   TrackerSettings:
     BindingMode: 4
-    PositionDamping: {x: 1, y: 1, z: 1}
+    PositionDamping: {x: 0.1, y: 0.1, z: 0.1}
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
@@ -1442,13 +1446,13 @@ MonoBehaviour:
   Radius: 5
   Orbits:
     Top:
-      Radius: 3
+      Radius: 1
       Height: 1.5
     Center:
-      Radius: 4
+      Radius: 1.5
       Height: 0.8
     Bottom:
-      Radius: 4
+      Radius: 2
       Height: -0.5
     SplineCurvature: 0
   RecenteringTarget: 2
@@ -1498,7 +1502,7 @@ MonoBehaviour:
     Enabled: 0
     m_Value: 0
   OutputChannel: 1
-  StandbyUpdate: 2
+  StandbyUpdate: 1
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
@@ -1540,7 +1544,7 @@ MonoBehaviour:
   CollideAgainst:
     serializedVersion: 2
     m_Bits: 1
-  IgnoreTag: 
+  IgnoreTag: Player
   TransparentLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1549,7 +1553,7 @@ MonoBehaviour:
     Enabled: 1
     DistanceLimit: 0
     MinimumOcclusionTime: 0
-    CameraRadius: 2
+    CameraRadius: 1
     UseFollowTarget:
       Enabled: 0
       YOffset: 0
@@ -2685,7 +2689,7 @@ CharacterController:
   m_Height: 2
   m_Radius: 0.5
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.05
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 1, z: 0}
