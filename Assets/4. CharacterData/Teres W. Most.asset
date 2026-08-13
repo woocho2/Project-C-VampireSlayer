@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3457ddcb89af18419c95d66864e0931, type: 3}
   m_Name: Teres W. Most
   m_EditorClassIdentifier: Assembly-CSharp::CharacterDataSO
-  playerName: Teres W. Most
+  playerName: Teres
   playerPrefab: {fileID: 108838498569391885, guid: 219fde7b9e3661541ae1861988f9ffa8, type: 3}
   fieldPlayerPrefab: {fileID: 108838498569391885, guid: 8e7eb62bac6d76645bfe7aa22025db05, type: 3}
   playerturnSprite: {fileID: 21300000, guid: 55495fa9a9bf8374c989e41acbeb31e1, type: 3}

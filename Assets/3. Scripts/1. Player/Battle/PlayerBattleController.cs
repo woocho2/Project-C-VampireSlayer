@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.InputSystem; // [추가] 새로운 Input System 네임스페이스 적용
 
 [RequireComponent(typeof(UnitController))]
 public class PlayerBattleController : MonoBehaviour
@@ -10,6 +11,7 @@ public class PlayerBattleController : MonoBehaviour
     private System.Action turnFinishedCallback;
     private PlayerAniController m_aniController;
     private Animator m_ani;
+    private bool isMyTurn = false;
 
     // ==========================================
     // [1] 유니티 생명주기 (초기화)
@@ -31,12 +33,42 @@ public class PlayerBattleController : MonoBehaviour
     {
         m_unitEnemy = enemy;
         turnFinishedCallback = onTurnFinished;
+        isMyTurn = true; // [추가] 키보드 입력 허용
 
         if (BattleUIManager.Instance != null)
         {
+            // [핵심 복구] 버튼을 누르면 각각의 명령 함수가 실행되도록 다시 연결해 줍니다.
+            BattleUIManager.Instance.btn_attack.onClick.RemoveAllListeners();
+            BattleUIManager.Instance.btn_attack.onClick.AddListener(OnAttackCommand);
             BattleUIManager.Instance.btn_attack.interactable = true;
+
+            BattleUIManager.Instance.btn_skill.onClick.RemoveAllListeners();
+            BattleUIManager.Instance.btn_skill.onClick.AddListener(OnSkillCommand);
             BattleUIManager.Instance.btn_skill.interactable = true;
-            BattleUIManager.Instance.ShowPlayerActionUI(true);
+
+            BattleUIManager.Instance.ShowPlayerActionUI(true, true);
+        }
+    }
+
+    // 매 프레임 키보드 입력을 감지합니다.
+    private void Update()
+    {
+        // 내 턴이 아니거나 UI가 열려있지 않다면 입력을 무시합니다.
+        if (!isMyTurn) return;
+
+        // [수정 완료] 새로운 Input System 문법 적용
+        if (Keyboard.current != null)
+        {
+            // F 버튼: 일반 공격
+            if (Keyboard.current.fKey.wasPressedThisFrame)
+            {
+                OnAttackCommand();
+            }
+            // E 버튼: 스킬
+            else if (Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                OnSkillCommand();
+            }
         }
     }
 
@@ -84,21 +116,17 @@ public class PlayerBattleController : MonoBehaviour
     /// </summary>
     private IEnumerator AttackRoutine()
     {
+        // 1. 공격 시작 전 UI 알림창을 띄우고 2초간 대기합니다.
+        BattleUIManager.Instance.ShowActionNotification("공격합니다!");
+        yield return new WaitForSeconds(2.0f);
+
+        // 2. 대기가 끝나면 알림창을 숨기고 본 공격(타임라인)을 시작합니다.
+        BattleUIManager.Instance.HideActionNotification();
+
         PlayableDirector attackTimeline = BattleManager.Instance.playerAttackDirector;
 
         if (attackTimeline != null && attackTimeline.playableAsset != null)
         {
-            Animator anim = GetAnimator();
-
-            foreach (var track in attackTimeline.playableAsset.outputs)
-            {
-                if (track.streamName == "PlayerAnimTrack")
-                {
-                    attackTimeline.SetGenericBinding(track.sourceObject, anim);
-                    break;
-                }
-            }
-
             attackTimeline.Play();
             yield return null; // 1프레임 대기 (타임라인 재생 버그 방지)
             yield return new WaitUntil(() => attackTimeline.state != PlayState.Playing);
@@ -133,10 +161,10 @@ public class PlayerBattleController : MonoBehaviour
     /// </summary>
     private void DisableButtonsAndHideUI()
     {
+        isMyTurn = false; // 행동을 선택했으므로 키보드 입력을 다시 차단합니다.
+
         if (BattleUIManager.Instance != null)
         {
-            BattleUIManager.Instance.btn_attack.interactable = false;
-            BattleUIManager.Instance.btn_skill.interactable = false;
             BattleUIManager.Instance.ShowPlayerActionUI(false);
         }
     }

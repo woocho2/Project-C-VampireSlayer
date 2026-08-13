@@ -115,7 +115,7 @@ public class TimeLineController : MonoBehaviour
 
         if (attacker != null && target != null)
         {
-            int rawDamage = Mathf.RoundToInt(attacker.power * skillMultiplier);
+            int rawDamage = Mathf.RoundToInt(attacker.power);
             target.TakeDamage(rawDamage);
         }
     }

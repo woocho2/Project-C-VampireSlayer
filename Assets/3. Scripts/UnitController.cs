@@ -29,7 +29,6 @@ public class UnitController : MonoBehaviour
     [Header("UI 연동")]
     private PlayerStatusUI myStatusUI;
 
-
     // ==========================================
     // [1] 데이터 셋업 및 초기화
     // ==========================================
@@ -69,6 +68,14 @@ public class UnitController : MonoBehaviour
 
         InitializeActionValue();
         SpawnVisualModel(data.monsterPrefab);
+
+        // ==========================================
+        // [추가] 적 데이터 셋업 시 중앙 체력바 UI 초기화
+        // ==========================================
+        if (BattleUIManager.Instance != null)
+        {
+            BattleUIManager.Instance.SetupEnemyHPBar(maxHP, currentHP);
+        }
     }
 
     /// <summary>
@@ -95,7 +102,7 @@ public class UnitController : MonoBehaviour
         myStatusUI = ui;
         if (myStatusUI != null)
         {
-            myStatusUI.SetupUI(unitPortrait, maxHP, currentHP, maxAP, currentAP);
+            myStatusUI.SetupUI(unitPortrait, maxHP, currentHP, maxAP, currentAP, unitName);
         }
     }
 
@@ -122,7 +129,21 @@ public class UnitController : MonoBehaviour
         currentHP -= finalDamage;
         Debug.Log($"{unitName}이(가) {finalDamage}의 데미지를 입었습니다. (남은 체력: {currentHP})");
 
+        // 플레이어일 경우 개별 상태창 UI 업데이트
         if (myStatusUI != null) myStatusUI.UpdateHP(currentHP);
+
+        // ==========================================
+        // [추가] 적일 경우 중앙 체력바 UI 업데이트 및 숨김 처리
+        // ==========================================
+        if (!isPlayer && BattleUIManager.Instance != null)
+        {
+            BattleUIManager.Instance.UpdateEnemyHPBar(currentHP);
+
+            if (currentHP <= 0)
+            {
+                BattleUIManager.Instance.HideEnemyHPBar();
+            }
+        }
 
         if (currentHP <= 0)
         {

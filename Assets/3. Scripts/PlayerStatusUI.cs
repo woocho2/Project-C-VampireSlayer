@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,7 @@ public class PlayerStatusUI : MonoBehaviour
     public Image portraitImage; // 캐릭터 얼굴 이미지
     public Slider hpSlider;     // 붉은색 체력바
     public Slider apSlider;     // 노란색 AP바
+    public TextMeshProUGUI txt_Name;
 
     // ==========================================
     // [1] UI 초기화
@@ -15,9 +17,11 @@ public class PlayerStatusUI : MonoBehaviour
     /// <summary>
     /// 캐릭터가 씬에 생성될 때 최초 1회 호출되어 UI의 기본값을 세팅합니다.
     /// </summary>
-    public void SetupUI(Sprite portrait, int maxHP, int currentHP, int maxAP, int currentAP)
+    public void SetupUI(Sprite portrait, int maxHP, int currentHP, int maxAP, int currentAP, string name)
     {
         if (portraitImage != null) portraitImage.sprite = portrait;
+
+        if (txt_Name != null) txt_Name.text = name;
 
         if (hpSlider != null)
         {

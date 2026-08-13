@@ -162,6 +162,8 @@ public class BattleManager : MonoBehaviour
         if (BattleCameraManager.Instance != null && BattleCameraManager.Instance.BaseCamera != null)
             BattleCameraManager.Instance.BaseCamera.Priority = 10;
 
+        CalculateAndDisplayTurnOrder(GetAliveUnits());
+
         state = BattleState.TurnProgress;
         StartCoroutine(TurnLoopRoutine());
     }
@@ -183,6 +185,7 @@ public class BattleManager : MonoBehaviour
             // 아군 턴
             if (playerUnits.Contains(nextTurnUnit))
             {
+                // (기존 코드) 타겟팅 로직 등...
                 List<UnitController> aliveEnemies = GetAliveEnemies();
                 if (aliveEnemies.Count > 0)
                 {
@@ -211,6 +214,7 @@ public class BattleManager : MonoBehaviour
                     if (BattleCameraManager.Instance != null)
                         BattleCameraManager.Instance.SetEnemyView(nextTurnUnit.transform);
 
+                    CalculateAndDisplayTurnOrder(aliveUnits);
                     eController.ExecuteTurn(playerUnits, () => { isTurnFinished = true; });
                 }
             }
