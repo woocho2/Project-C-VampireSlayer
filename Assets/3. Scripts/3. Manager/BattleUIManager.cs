@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using UnityEngine.SceneManagement; // [추가] 씬 전환을 위해 반드시 필요합니다.
 
 public class BattleUIManager : MonoBehaviour
 {
@@ -17,9 +18,14 @@ public class BattleUIManager : MonoBehaviour
     [Header("연출 설정")]
     public float blinkSpeed = 5f;
 
-    [Header("전투 정보 패널 UI")]
+    [Header("패널 UI")]
     [SerializeField] GameObject TurnPanel;
     [SerializeField] GameObject GamePanel;
+    [SerializeField] GameObject VictoryPanel;
+    [SerializeField] Button btn_resume;
+    [SerializeField] GameObject DefeatPanel;
+    [SerializeField] Button btn_home;
+    [SerializeField] Button btn_retry;
     public PlayerStatusUI[] playerStatusUIs;
 
     [Header("적 체력바 UI")]
@@ -59,6 +65,15 @@ public class BattleUIManager : MonoBehaviour
         if (TurnPanel != null) TurnPanel.SetActive(false);
         if (actionNotificationPanel != null) actionNotificationPanel.SetActive(false);
         if (EnemyHPBar != null) EnemyHPBar.gameObject.SetActive(false); // 초기 시작 시 적 체력바 숨김
+
+        // [추가] 시작 시 승리/패배 패널 비활성화
+        if (VictoryPanel != null) VictoryPanel.SetActive(false);
+        if (DefeatPanel != null) DefeatPanel.SetActive(false);
+
+        // [추가] 버튼 이벤트 리스너 연결
+        if (btn_resume != null) btn_resume.onClick.AddListener(LoadFieldScene);
+        if (btn_home != null) btn_home.onClick.AddListener(LoadFieldScene);
+        if (btn_retry != null) btn_retry.onClick.AddListener(ReloadBattleScene);
     }
 
     private void InitializeTurnSlots()
@@ -271,5 +286,40 @@ public class BattleUIManager : MonoBehaviour
         {
             EnemyHPBar.gameObject.SetActive(false);
         }
+    }
+
+    public void ShowVictoryPanel()
+    {
+        HideAllPanels();
+        if (VictoryPanel != null) VictoryPanel.SetActive(true);
+    }
+
+    public void ShowDefeatPanel()
+    {
+        HideAllPanels();
+        if (DefeatPanel != null) DefeatPanel.SetActive(true);
+    }
+
+    private void HideAllPanels()
+    {
+        if (IntroPanel != null) IntroPanel.SetActive(false);
+        if (GamePanel != null) GamePanel.SetActive(false);
+        if (TurnPanel != null) TurnPanel.SetActive(false);
+        if (actionNotificationPanel != null) actionNotificationPanel.SetActive(false);
+        if (EnemyHPBar != null) EnemyHPBar.gameObject.SetActive(false);
+        if (VictoryPanel != null) VictoryPanel.SetActive(false);
+        if (DefeatPanel != null) DefeatPanel.SetActive(false);
+    }
+
+    private void LoadFieldScene()
+    {
+        // 빌드 세팅(Build Settings)에 "fieldscene"이 등록되어 있어야 합니다.
+        SceneManager.LoadScene("fieldscene");
+    }
+
+    private void ReloadBattleScene()
+    {
+        // 현재 활성화된 배틀씬의 이름을 가져와서 다시 로드합니다.
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

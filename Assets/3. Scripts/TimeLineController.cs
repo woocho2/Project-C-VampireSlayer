@@ -108,7 +108,7 @@ public class TimeLineController : MonoBehaviour
     // ==========================================
     // [4] 데미지 판정 시그널
     // ==========================================
-    public void Signal_ApplyDamage(float skillMultiplier)
+    public void Signal_ApplyDamageToEnemy(float skillMultiplier)
     {
         UnitController attacker = BattleManager.Instance.CurrentAttacker;
         UnitController target = BattleManager.Instance.CurrentTarget;
@@ -117,6 +117,25 @@ public class TimeLineController : MonoBehaviour
         {
             int rawDamage = Mathf.RoundToInt(attacker.power);
             target.TakeDamage(rawDamage);
+        }
+    }
+
+    // ==========================================
+    // [추가] 적 공격 판정 전용 시그널
+    // ==========================================
+    public void Signal_ApplyDamageToPlayer()
+    {
+        UnitController attacker = BattleManager.Instance.CurrentAttacker;
+        UnitController target = BattleManager.Instance.CurrentTarget;
+
+        if (attacker != null && !attacker.isPlayer && target != null)
+        {
+            // 공격자가 적군일 경우, 해당 컨트롤러를 찾아 QTE 판정 로직을 실행시킵니다.
+            EnemyBattleController enemyController = attacker.GetComponent<EnemyBattleController>();
+            if (enemyController != null)
+            {
+                enemyController.ResolveEnemyAttack(target);
+            }
         }
     }
 }

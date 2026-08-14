@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.InputSystem; // [추가] 새로운 Input System 네임스페이스 적용
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(UnitController))]
 public class PlayerBattleController : MonoBehaviour
@@ -14,8 +14,18 @@ public class PlayerBattleController : MonoBehaviour
     private bool isMyTurn = false;
 
     // ==========================================
-    // [1] 유니티 생명주기 (초기화)
+    // [추가] 방어(QTE) 판정 설정 및 상태 변수
     // ==========================================
+    [Header("방어 판정 설정 (현실 시간/초)")]
+    public float dodgeDuration = 0.8f;
+    public float parryDuration = 0.5f;
+    public float actionCooldown = 1.0f;
+
+    private float dodgeExpirationTime = -1f;
+    private float parryExpirationTime = -1f;
+    private float cooldownExpirationTime = -1f;
+    private bool isDefendingMode = false;
+
     private void Awake()
     {
         m_unitPlayer = GetComponent<UnitController>();
@@ -23,21 +33,16 @@ public class PlayerBattleController : MonoBehaviour
     }
 
     // ==========================================
-    // [2] 턴 루프 (실행 흐름)
+    // [1] 공격 턴 로직
     // ==========================================
-
-    /// <summary>
-    /// 1. 턴 시작: BattleManager에 의해 호출되며, 버튼 상호작용을 켜고 UI를 노출합니다.
-    /// </summary>
     public void StartTurn(UnitController enemy, System.Action onTurnFinished)
     {
         m_unitEnemy = enemy;
         turnFinishedCallback = onTurnFinished;
-        isMyTurn = true; // [추가] 키보드 입력 허용
+        isMyTurn = true;
 
         if (BattleUIManager.Instance != null)
         {
-            // [핵심 복구] 버튼을 누르면 각각의 명령 함수가 실행되도록 다시 연결해 줍니다.
             BattleUIManager.Instance.btn_attack.onClick.RemoveAllListeners();
             BattleUIManager.Instance.btn_attack.onClick.AddListener(OnAttackCommand);
             BattleUIManager.Instance.btn_attack.interactable = true;
@@ -50,85 +55,35 @@ public class PlayerBattleController : MonoBehaviour
         }
     }
 
-    // 매 프레임 키보드 입력을 감지합니다.
-    private void Update()
-    {
-        // 내 턴이 아니거나 UI가 열려있지 않다면 입력을 무시합니다.
-        if (!isMyTurn) return;
-
-        // [수정 완료] 새로운 Input System 문법 적용
-        if (Keyboard.current != null)
-        {
-            // F 버튼: 일반 공격
-            if (Keyboard.current.fKey.wasPressedThisFrame)
-            {
-                OnAttackCommand();
-            }
-            // E 버튼: 스킬
-            else if (Keyboard.current.eKey.wasPressedThisFrame)
-            {
-                OnSkillCommand();
-            }
-        }
-    }
-
-    /// <summary>
-    /// 2-A. 공격 명령: UI 버튼 클릭 시 호출됩니다.
-    /// </summary>
     public void OnAttackCommand()
     {
-        if (m_unitEnemy == null || turnFinishedCallback == null)
-        {
-            EndTurn();
-            return;
-        }
-
+        if (m_unitEnemy == null || turnFinishedCallback == null) { EndTurn(); return; }
         DisableButtonsAndHideUI();
         BattleCameraManager.Instance.ResetToMainView();
         StartCoroutine(AttackRoutine());
     }
 
-    /// <summary>
-    /// 2-B. 스킬 명령: UI 버튼 클릭 시 호출됩니다.
-    /// </summary>
     public void OnSkillCommand()
     {
-        if (m_unitEnemy == null || turnFinishedCallback == null)
-        {
-            EndTurn();
-            return;
-        }
-
+        if (m_unitEnemy == null || turnFinishedCallback == null) { EndTurn(); return; }
         DisableButtonsAndHideUI();
         BattleCameraManager.Instance.ResetToMainView();
         int skillDamage = Mathf.RoundToInt(m_unitPlayer.power * 2.0f);
         m_unitEnemy.TakeDamage(skillDamage);
-
-        EndTurn(); // 스킬은 즉발이므로 바로 턴을 종료합니다.
+        EndTurn();
     }
 
-    // ==========================================
-    // [3] 연출 코루틴 및 종속(Helper) 함수
-    // ==========================================
-
-    /// <summary>
-    /// 공격 타임라인 연출을 관리하는 코루틴 (OnAttackCommand와 세트)
-    /// </summary>
     private IEnumerator AttackRoutine()
     {
-        // 1. 공격 시작 전 UI 알림창을 띄우고 2초간 대기합니다.
         BattleUIManager.Instance.ShowActionNotification("공격합니다!");
         yield return new WaitForSeconds(2.0f);
-
-        // 2. 대기가 끝나면 알림창을 숨기고 본 공격(타임라인)을 시작합니다.
         BattleUIManager.Instance.HideActionNotification();
 
         PlayableDirector attackTimeline = BattleManager.Instance.playerAttackDirector;
-
         if (attackTimeline != null && attackTimeline.playableAsset != null)
         {
             attackTimeline.Play();
-            yield return null; // 1프레임 대기 (타임라인 재생 버그 방지)
+            yield return null;
             yield return new WaitUntil(() => attackTimeline.state != PlayState.Playing);
         }
         else
@@ -140,40 +95,94 @@ public class PlayerBattleController : MonoBehaviour
 
         BattleCameraManager.Instance?.ResetToMainView();
         yield return new WaitForSeconds(0.5f);
-
-        EndTurn(); // 연출이 모두 끝나면 턴을 종료합니다.
+        EndTurn();
     }
 
-    /// <summary>
-    /// 프리팹이 교체되어도 안전하게 호출할 수 있는 애니메이터 확인 함수 (AttackRoutine과 세트)
-    /// </summary>
-    private Animator GetAnimator()
-    {
-        if (m_ani == null)
-        {
-            m_ani = m_unitPlayer.GetComponentInChildren<Animator>();
-        }
-        return m_ani;
-    }
-
-    /// <summary>
-    /// 행동을 시작할 때 입력을 막기 위해 UI를 숨기는 보조 함수
-    /// </summary>
     private void DisableButtonsAndHideUI()
     {
-        isMyTurn = false; // 행동을 선택했으므로 키보드 입력을 다시 차단합니다.
-
-        if (BattleUIManager.Instance != null)
-        {
-            BattleUIManager.Instance.ShowPlayerActionUI(false);
-        }
+        isMyTurn = false;
+        if (BattleUIManager.Instance != null) BattleUIManager.Instance.ShowPlayerActionUI(false);
     }
 
-    /// <summary>
-    /// 3. 턴 종료: 모든 행동과 연출이 끝난 후 BattleManager로 권한을 넘깁니다.
-    /// </summary>
     private void EndTurn()
     {
         turnFinishedCallback?.Invoke();
+    }
+
+    // ==========================================
+    // [2] 방어 턴(QTE) 및 키보드 입력 로직
+    // ==========================================
+    private void Update()
+    {
+        if (Keyboard.current == null) return;
+
+        // 1. 내 공격 턴일 때의 입력 감지
+        if (isMyTurn)
+        {
+            if (Keyboard.current.fKey.wasPressedThisFrame) OnAttackCommand();
+            else if (Keyboard.current.eKey.wasPressedThisFrame) OnSkillCommand();
+        }
+        // 2. 적의 공격을 방어하는 턴일 때의 입력 감지
+        else if (isDefendingMode)
+        {
+            float currentTime = Time.unscaledTime; // 배속에 영향받지 않는 현실 시간 기준
+
+            if (currentTime > cooldownExpirationTime)
+            {
+                if (Keyboard.current.eKey.wasPressedThisFrame)
+                {
+                    Debug.Log("플레이어: 패링 시도!");
+                    parryExpirationTime = currentTime + parryDuration;
+                    cooldownExpirationTime = currentTime + actionCooldown;
+                }
+                else if (Keyboard.current.qKey.wasPressedThisFrame)
+                {
+                    Debug.Log("플레이어: 회피 시도!");
+                    dodgeExpirationTime = currentTime + dodgeDuration;
+                    cooldownExpirationTime = currentTime + actionCooldown;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 적이 공격을 시작할 때 호출하여 플레이어의 방어 입력을 활성화합니다.
+    /// </summary>
+    public void EnableDefenseMode()
+    {
+        isDefendingMode = true;
+        dodgeExpirationTime = -1f;
+        parryExpirationTime = -1f;
+        cooldownExpirationTime = -1f;
+    }
+
+    /// <summary>
+    /// 적의 타격이 끝났을 때 호출하여 방어 입력을 차단합니다.
+    /// </summary>
+    public void DisableDefenseMode()
+    {
+        isDefendingMode = false;
+    }
+
+    /// <summary>
+    /// 적이 타격하는 순간 호출하여, 플레이어가 현재 방어에 성공했는지 판정 결과를 반환합니다.
+    /// </summary>
+    public EnemyBattleController.QTEResult GetCurrentDefenseResult()
+    {
+        float currentTime = Time.unscaledTime;
+
+        Debug.Log($"QTE 판정 시작! 현재 시간: {currentTime:F2} | 패링 만료 시간: {parryExpirationTime:F2} | 회피 만료 시간: {dodgeExpirationTime:F2}");
+
+        if (currentTime <= parryExpirationTime) return EnemyBattleController.QTEResult.Parried;
+        if (currentTime <= dodgeExpirationTime) return EnemyBattleController.QTEResult.Dodged;
+
+        Debug.Log("모든 판정 시간 초과. 방어 실패 (None 반환)");
+        return EnemyBattleController.QTEResult.None;
+    }
+
+    private Animator GetAnimator()
+    {
+        if (m_ani == null) m_ani = m_unitPlayer.GetComponentInChildren<Animator>();
+        return m_ani;
     }
 }

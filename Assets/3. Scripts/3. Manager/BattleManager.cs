@@ -348,6 +348,7 @@ public class BattleManager : MonoBehaviour
             BattleUIManager.Instance.UpdateTurnOrderUI(predictedTurns);
         }
     }
+      
 
     // ==========================================
     // [5] 전투 종료 판정
@@ -379,15 +380,24 @@ public class BattleManager : MonoBehaviour
         return false;
     }
 
+    // [수정] 전투 결과에 따라 알맞은 UI 패널을 호출합니다.
     private void EndBattle()
     {
         if (state == BattleState.Won)
         {
             Debug.Log("전투 승리! 보상 화면으로 이동합니다.");
+            if (BattleUIManager.Instance != null)
+            {
+                BattleUIManager.Instance.ShowVictoryPanel();
+            }
         }
         else if (state == BattleState.Lost)
         {
             Debug.Log("전투 패배. 게임 오버 씬으로 이동합니다.");
-        }
+            if (BattleUIManager.Instance != null)
+            {
+                BattleUIManager.Instance.ShowDefeatPanel();
+            }
+        };
     }
 }
